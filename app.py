@@ -15,53 +15,48 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Tema Escuro Unificado e Simetria)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Cards Delimitados / Moldura)
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* Fundo da aplicação principal e barra lateral unificados em tema escuro */
+    /* Fundo escuro unificado */
     .stApp, div[data-testid="stSidebar"] {
         background-color: #0e1117 !important;
         color: #f5f5f5 !important;
     }
     
-    /* Garantir fundo escuro para o conteúdo interno da sidebar */
     section[data-testid="stSidebar"] > div {
         background-color: #0e1117 !important;
     }
 
-    /* Títulos, rótulos e textos na barra lateral e corpo principal */
     h1, h2, h3, h4, label, p, span {
         color: #ffffff !important;
     }
 
-    /* Estilização dos inputs/selects na sidebar */
+    /* Estilo dos inputs na sidebar */
     div[data-testid="stSidebar"] input, div[data-testid="stSidebar"] select {
         background-color: #161b22 !important;
         color: #ffffff !important;
         border: 1px solid #30363d !important;
     }
 
-    /* Card do Produto com altura uniforme */
-    div[data-testid="column"] > div[data-testid="stVerticalBlock"] {
+    /* MOLDURA DO CARD: Agrupa Imagem + Título + Preço + Botão */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #161b22;
         border: 1px solid #30363d;
         border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 15px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 480px;
+        padding: 16px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
-    /* Imagens padronizadas no card */
-    div[data-testid="column"] img {
+    /* Imagem padronizada dentro do card */
+    div[data-testid="stVerticalBlockBorderWrapper"] img {
         border-radius: 8px;
         object-fit: cover;
-        max-height: 280px;
-        width: 100%;
+        height: 280px !important;
+        width: 100% !important;
     }
 
     /* Detalhes do Card */
@@ -79,14 +74,25 @@ st.markdown(
     }
 
     .card-price {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         color: #2ecc71;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
-    /* Botões Padrão (Amarelo / Preto) */
+    /* Banner promocional de desconto no topo */
+    .promo-banner {
+        background-color: #1f2937;
+        border-left: 4px solid #f39c12;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        color: #f1c40f;
+        font-weight: 600;
+    }
+
+    /* Botão Amarelo */
     .stButton > button {
         background-color: #f39c12;
         color: #000000 !important;
@@ -94,7 +100,7 @@ st.markdown(
         border-radius: 8px;
         border: none;
         width: 100%;
-        padding: 8px 16px;
+        padding: 10px 16px;
         transition: all 0.3s ease;
     }
 
@@ -122,7 +128,6 @@ def carregar_dados():
 
 produtos = carregar_dados()
 
-# Listas separadas de gigantes europeus e nacionais para intercalação no topo
 CLUBES_EUROPA = [
     "real madrid",
     "barcelona",
@@ -149,7 +154,6 @@ CLUBES_BRASIL = [
     "vasco",
 ]
 
-# Monta ranking alternado: 1º Europa, 1º Brasil, 2º Europa, 2º Brasil...
 RANKING_INTERCALADO = []
 max_len = max(len(CLUBES_EUROPA), len(CLUBES_BRASIL))
 for i in range(max_len):
@@ -218,6 +222,9 @@ with st.sidebar:
     st.markdown(f"**Total de peças:** {total_pecas}")
     st.markdown(f"**Subtotal:** R$ {valor_total:,.2f}".replace(".", ","))
 
+    if total_pecas >= 3:
+      st.info("🔥 **Desconto especial aplicado no fechamento via WhatsApp!**")
+
     if total_pecas < 2:
       st.warning("⚠️ Adicione **pelo menos 2 peças** para liberar o WhatsApp.")
     else:
@@ -230,6 +237,8 @@ with st.sidebar:
       for item in st.session_state.carrinho:
         msg += f"• {item['time']} (Versão {item['versao']})\n"
       msg += f"\nTotal: R$ {valor_total:,.2f}"
+      if total_pecas >= 3:
+        msg += "\n*(Cliente apto ao desconto especial de 3+ peças)*"
 
       url_wa = f"https://wa.me/5511999999999?text={urllib.parse.quote(msg)}"
 
@@ -246,19 +255,29 @@ with st.sidebar:
       st.rerun()
 
 # -------------------------------------------------------------
-# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS)
+# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS EM MOLDURA)
 # -------------------------------------------------------------
 
-# Banner centralizado no topo
+# Banner no topo
 if os.path.exists("banner.jpg"):
   st.image("banner.jpg", use_container_width=True)
 elif os.path.exists("banner.png"):
   st.image("banner.png", use_container_width=True)
 
 st.title("⚽ Catálogo Oficial de Camisas")
-st.markdown("Selecione suas camisas favoritas. **Pedido mínimo de 2 peças.**")
 
-# Filtragem de Produtos
+# Aviso em destaque sobre o pedido mínimo e o desconto
+st.markdown(
+    """
+    <div class="promo-banner">
+        📌 <b>Regras da Loja:</b> Pedido mínimo de <b>2 peças</b>.<br>
+        🎁 <b>Oferta Especial:</b> Na compra de <b>3 ou mais peças</b>, você ganha um <b>desconto especial</b> no fechamento do seu pedido!
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
+# Processamento e filtragem
 produtos_filtrados = []
 for p in produtos:
   nome_limpo = re.sub(
@@ -281,10 +300,9 @@ for p in produtos:
   p_copia["nome_limpo"] = nome_limpo if nome_limpo else p["time"]
   produtos_filtrados.append(p_copia)
 
-# Ordenação com mistura equilibrada entre gigantes do Brasil e da Europa
 produtos_filtrados.sort(key=prioridade_destaque)
 
-# Exibição na Grade de 3 Colunas
+# Exibição dos cards com moldura (st.container(border=True))
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
@@ -295,7 +313,8 @@ else:
     col_atual = grid_colunas[i % cols_por_linha]
 
     with col_atual:
-      with st.container():
+      # st.container(border=True) cria a moldura delimitando o card
+      with st.container(border=True):
         if os.path.exists(camisa["nome_arquivo"]):
           st.image(camisa["nome_arquivo"], use_container_width=True)
         else:
