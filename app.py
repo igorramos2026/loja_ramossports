@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Cards Delimitados / Moldura)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Molduras Fortes e Marcadas)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -41,14 +41,14 @@ st.markdown(
         border: 1px solid #30363d !important;
     }
 
-    /* MOLDURA DO CARD: Agrupa Imagem + Título + Preço + Botão */
+    /* MOLDURA DO CARD DESTACADA: Borda branca mais grossa e marcante */
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        background-color: #161b22 !important;
+        border: 2px solid #ffffff !important;
+        border-radius: 14px !important;
+        padding: 16px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 6px 12px rgba(255, 255, 255, 0.15) !important;
     }
 
     /* Imagem padronizada dentro do card */
@@ -255,7 +255,7 @@ with st.sidebar:
       st.rerun()
 
 # -------------------------------------------------------------
-# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS EM MOLDURA)
+# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS COM MOLDURA FORTE)
 # -------------------------------------------------------------
 
 # Banner no topo
@@ -302,7 +302,7 @@ for p in produtos:
 
 produtos_filtrados.sort(key=prioridade_destaque)
 
-# Exibição dos cards com moldura (st.container(border=True))
+# Exibição dos cards com moldura espessa e bem delimitada
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
@@ -313,7 +313,6 @@ else:
     col_atual = grid_colunas[i % cols_por_linha]
 
     with col_atual:
-      # st.container(border=True) cria a moldura delimitando o card
       with st.container(border=True):
         if os.path.exists(camisa["nome_arquivo"]):
           st.image(camisa["nome_arquivo"], use_container_width=True)
