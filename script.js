@@ -5,10 +5,13 @@ let carrinho = [];
 const CLUBES_EUROPA = ["real madrid", "barcelona", "paris saint germain", "psg", "manchester city", "bayern", "liverpool", "arsenal", "juventus", "milan"];
 const CLUBES_BRASIL = ["flamengo", "palmeiras", "corinthians", "sao paulo", "santos", "gremio", "internacional", "atletico mineiro", "botafogo", "fluminense", "vasco"];
 
-// Carrega o JSON ao abrir a página
+// Carrega o JSON ao abrir a página de forma robusta
 window.addEventListener("DOMContentLoaded", () => {
-    fetch("camisas.json")
-        .then(response => response.json())
+    fetch("./camisas.json")
+        .then(response => {
+            if (!response.ok) throw new Error("Erro ao carregar o JSON");
+            return response.json();
+        })
         .then(data => {
             produtosGlobais = data;
             popularFiltroPaises(data);
@@ -22,9 +25,13 @@ function popularFiltroPaises(produtos) {
     const paisesSet = new Set();
     
     produtos.forEach(p => {
-        if (p.nome_arquivo && p.nome_arquivo.includes("/")) {
-            const pais = p.nome_arquivo.split("/")[0];
-            paisesSet.add(pais);
+        if (p.nome_arquivo) {
+            let caminhoLimpo = p.nome_arquivo.trim();
+            if (caminhoLimpo.startsWith('/')) caminhoLimpo = caminhoLimpo.substring(1);
+            if (caminhoLimpo.includes("/")) {
+                const pais = caminhoLimpo.split("/")[0];
+                if (pais) paisesSet.add(pais);
+            }
         }
     });
 
@@ -37,50 +44,55 @@ function popularFiltroPaises(produtos) {
 }
 
 function limparNomeClube(nomeOriginal) {
+    if (!nomeOriginal) return "";
     return nomeOriginal.replace(/\b(I{1,3}|IV|V|1|2|3|I{1,3}\s*i{1,3})$/gi, "").trim();
 }
 
-function traduzirModelo(versao) {
-    const vStr = String(versao).trim().toUpperCase();
+function traduzirModelo(versaoOriginal) {
+    if (!versaoOriginal) return "Casa";
+    const vStr = String(versaoOriginal).trim().toUpperCase();
     const vLimpo = vStr.replace(/[^A-Z0-9]/g, "");
+
     if (["I", "1", "MODELO1", "VERSAO1"].includes(vLimpo)) return "Casa";
     if (["II", "2", "MODELO2", "VERSAO2"].includes(vLimpo)) return "Visitante";
     if (["III", "3", "MODELO3", "VERSAO3"].includes(vLimpo)) return "Terceiro Uniforme";
-    return versao;
+    return String(versaoOriginal).trim();
 }
 
 function prioridadeDestaque(nomeLimpo) {
-    const nomeLower = nomeLimpo.toLowerCase();
+    const nomeLower = (nomeLimpo || "").toLowerCase();
     
-    // Intercala Europa e Brasil no topo
     let ranking = [];
     let maxLen = Math.max(CLUBES_EUROPA.length, CLUBES_BRASIL.length);
-    for(let i=0; i<maxLen; i++) {
-        if(i < CLUBES_EUROPA.length) ranking.push(CLUBES_EUROPA[i]);
-        if(i < CLUBES_BRASIL.length) ranking.push(CLUBES_BRASIL[i]);
+    for(let i = 0; i < maxLen; i++) {
+        if (i < CLUBES_EUROPA.length) ranking.push(CLUBES_EUROPA[i]);
+        if (i < CLUBES_BRASIL.length) ranking.push(CLUBES_BRASIL[i]);
     }
 
-    for(let i=0; i<ranking.length; i++) {
-        if(nomeLower.includes(ranking[i])) return i;
+    for(let i = 0; i < ranking.length; i++) {
+        if (nomeLower.includes(ranking[i])) return i;
     }
     return 999;
 }
 
 function filtrarProdutos() {
-    const termoBusca = document.getElementById("input-busca").value.toLowerCase();
+    const termoBusca = (document.getElementById("input-busca").value || "").toLowerCase();
     const paisSelecionado = document.getElementById("select-pais").value;
 
     let filtrados = produtosGlobais.map(p => {
-        let nomeLimpo = limparNomeClube(p.time);
-        if(!nomeLimpo) nomeLimpo = p.time;
+        let nomeLimpo = limparNomeClube(p.time || p.nome || "");
+        if (!nomeLimpo) nomeLimpo = p.time || "Camisa";
         return {
             ...p,
             nome_limpo: nomeLimpo,
-            modelo_formatado: traduzir_modelo(p.versao)
+            modelo_formatado: traduzirModelo(p.versao || p.modelo || "")
         };
     }).filter(p => {
         const matchBusca = p.nome_limpo.toLowerCase().includes(termoBusca);
-        const matchPais = (paisSelecionado === "Todos" || p.nome_arquivo.startsWith(paisSelecionado + "/"));
+        let caminhoArquivo = (p.nome_arquivo || "").trim();
+        if (caminhoArquivo.startsWith('/')) caminhoArquivo = caminhoArquivo.substring(1);
+        
+        const matchPais = (paisSelecionado === "Todos" || caminhoArquivo.startsWith(paisSelecionado + "/"));
         return matchBusca && matchPais;
     });
 
@@ -94,20 +106,28 @@ function renderizarCatalogo(produtos) {
     grid.innerHTML = "";
 
     if (produtos.length === 0) {
-        grid.innerHTML = "<p style='grid-column: span 3; text-align: center; color: #888;'>Nenhuma camisa encontrada.</p>";
+        grid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #888; padding: 40px;'>Nenhuma camisa encontrada.</p>";
         return;
     }
 
     produtos.forEach(p => {
         const card = document.createElement("div");
         card.className = "card-produto";
+        
+        // Trata o caminho da imagem para o GitHub Pages
+        let imgSrc = p.nome_arquivo ? p.nome_arquivo.trim() : '';
+        if (imgSrc.startsWith('/')) {
+            imgSrc = imgSrc.substring(1);
+        }
+        imgSrc = encodeURI(imgSrc);
+
         card.innerHTML = `
-            <img src="${p.nome_arquivo}" alt="${p.nome_limpo}" onerror="this.src='https://via.placeholder.com/250?text=Indisponivel'">
+            <img src="${imgSrc}" alt="${p.nome_limpo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/250?text=Sem+Imagem';">
             <div class="card-title">${p.nome_limpo}</div>
             <div class="tag-modelo">Modelo: ${p.modelo_formatado}</div>
             <div class="tag-preco">R$ 140,00</div>
             <div class="tag-frete">🚚 Frete Grátis</div>
-            <button class="btn-comprar" onclick="adicionarCarrinho('${p.id}', '${p.nome_limpo}', '${p.modelo_formatado}')">Adicionar ao Carrinho</button>
+            <button class="btn-comprar" onclick="adicionarCarrinho('${p.id || p.time}', '${p.nome_limpo.replace(/'/g, "\\'")}', '${p.modelo_formatado.replace(/'/g, "\\'")}')">Adicionar ao Carrinho</button>
         `;
         grid.appendChild(card);
     });
