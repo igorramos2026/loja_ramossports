@@ -10,7 +10,7 @@ import streamlit as st
 SEU_NUMERO_WHATSAPP = "5544997339870"
 
 # -------------------------------------------------------------
-# CONFIGURAÇÃO DA PÁGINA (Sidebar colapsada por padrão para mobile ver o catálogo primeiro)
+# CONFIGURAÇÃO DA PÁGINA
 # -------------------------------------------------------------
 st.set_page_config(
     page_title="Ramos Sports - Catálogo Oficial",
@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Responsivo Mobile + Desktop)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Grid Responsivo Mobile + Desktop)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -46,91 +46,100 @@ st.markdown(
         border: 1px solid #30363d !important;
     }
 
-    /* MOLDURA DO CARD ROBUSTA E EVIDENTE */
+    /* MOLDURA DO CARD ROBUSTA */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #161b22 !important;
-        border: 3px solid #f39c12 !important;
-        border-radius: 14px !important;
-        padding: 12px !important;
-        margin-bottom: 15px !important;
-        box-shadow: 0 6px 12px rgba(243, 156, 18, 0.2) !important;
+        border: 2px solid #f39c12 !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 4px 8px rgba(243, 156, 18, 0.2) !important;
     }
 
-    /* Imagem padronizada e otimizada para mobile e desktop */
+    /* Imagem padronizada */
     div[data-testid="stVerticalBlockBorderWrapper"] img {
         border-radius: 8px;
         object-fit: cover;
-        height: 220px !important;
+        height: 190px !important;
         width: 100% !important;
         border: 1px solid #30363d;
     }
 
-    /* Nome do Clube (Limpo) */
+    /* Nome do Clube */
     .card-title {
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 800;
         color: #ffffff;
         text-align: center;
-        margin-top: 8px;
-        margin-bottom: 6px;
-        min-height: 35px;
+        margin-top: 6px;
+        margin-bottom: 4px;
+        min-height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
     }
 
-    /* Tag de Modelo */
+    /* Tags */
     .tag-modelo {
         background-color: #1f2937;
         color: #f39c12;
         border: 1px solid #f39c12;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-weight: 700;
-        text-align: center;
-        font-size: 0.8rem;
-        margin-bottom: 6px;
-    }
-
-    /* Tag de Preço */
-    .tag-preco {
-        background-color: #0d2818;
-        color: #2ecc71;
-        border: 1px solid #2ecc71;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-weight: 800;
-        text-align: center;
-        font-size: 1rem;
-        margin-bottom: 6px;
-    }
-
-    /* Tag de Frete Grátis */
-    .tag-frete {
-        background-color: #1e3a8a;
-        color: #60a5fa;
-        border: 1px solid #3b82f6;
         padding: 3px 6px;
         border-radius: 6px;
         font-weight: 700;
         text-align: center;
         font-size: 0.75rem;
-        margin-bottom: 10px;
+        margin-bottom: 4px;
+    }
+
+    .tag-preco {
+        background-color: #0d2818;
+        color: #2ecc71;
+        border: 1px solid #2ecc71;
+        padding: 3px 6px;
+        border-radius: 6px;
+        font-weight: 800;
+        text-align: center;
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+
+    .tag-frete {
+        background-color: #1e3a8a;
+        color: #60a5fa;
+        border: 1px solid #3b82f6;
+        padding: 2px 4px;
+        border-radius: 6px;
+        font-weight: 700;
+        text-align: center;
+        font-size: 0.7rem;
+        margin-bottom: 8px;
         text-transform: uppercase;
     }
 
-    /* Banner promocional de desconto no topo */
+    /* Banners promocionais e alertas */
     .promo-banner {
         background-color: #1f2937;
         border-left: 5px solid #f39c12;
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-radius: 8px;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         color: #f1c40f;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+    }
+
+    .filter-notice {
+        background-color: #161b22;
+        border: 1px solid #f39c12;
+        padding: 8px 12px;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+        text-align: center;
     }
 
     /* Botão Amarelo */
@@ -141,9 +150,9 @@ st.markdown(
         border-radius: 8px;
         border: none;
         width: 100%;
-        padding: 8px 12px;
+        padding: 6px 10px;
         transition: all 0.3s ease;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
     .stButton > button:hover {
@@ -151,10 +160,22 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* Otimização responsiva para telas menores (Celulares) */
+    /* REGRA CSS PARA MANTER 2 COLUNAS LADO A LADO NO MOBILE */
     @media (max-width: 768px) {
+        /* Força colunas do streamlit a não quebrarem 100% da largura */
+        div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            justify-content: space-between !important;
+        }
+        div[data-testid="column"] {
+            width: 48% !important;
+            flex: 1 1 48% !important;
+            min-width: 48% !important;
+        }
         div[data-testid="stVerticalBlockBorderWrapper"] img {
-            height: 180px !important;
+            height: 150px !important;
         }
     }
     </style>
@@ -234,8 +255,12 @@ def traduzir_modelo(versao_original):
     return str(versao_original).strip()
 
 
+# Inicializa o carrinho na sessão
+if "carrinho" not in st.session_state:
+  st.session_state.carrinho = []
+
 # -------------------------------------------------------------
-# BARRA LATERAL (LOGO, FILTROS E CARRINHO)
+# BARRA LATERAL (LOGO, FILTROS E CARRINHO SECUNDÁRIO)
 # -------------------------------------------------------------
 with st.sidebar:
   if os.path.exists("logo.png"):
@@ -263,9 +288,6 @@ with st.sidebar:
   st.markdown("---")
   st.markdown("### 🛒 Seu Carrinho")
 
-  if "carrinho" not in st.session_state:
-    st.session_state.carrinho = []
-
   if len(st.session_state.carrinho) == 0:
     st.info("Carrinho vazio. Escolha no mínimo **2 peças** para fechar o pedido.")
   else:
@@ -274,25 +296,16 @@ with st.sidebar:
       with c1:
         st.write(f"• {item['time']} ({item['modelo']})")
       with c2:
-        if st.button("❌", key=f"del_{idx}"):
+        if st.button("❌", key=f"sidebar_del_{idx}"):
           st.session_state.carrinho.pop(idx)
           st.rerun()
 
     total_pecas = len(st.session_state.carrinho)
-    valor_unitario = 140.00
-    valor_total = total_pecas * valor_unitario
+    valor_total = total_pecas * 140.00
 
     st.markdown("---")
     st.markdown(f"**Total de peças:** {total_pecas}")
     st.markdown(f"**Subtotal:** R$ {valor_total:,.2f}".replace(".", ","))
-
-    if total_pecas >= 3:
-      st.info(
-          "🔥 **Desconto especial aplicado no fechamento via WhatsApp!** (Frete"
-          " Grátis)"
-      )
-    else:
-      st.info("📦 **Frete Grátis garantido!**")
 
     if total_pecas < 2:
       st.warning("⚠️ Adicione **pelo menos 2 peças** para liberar o WhatsApp.")
@@ -321,12 +334,12 @@ with st.sidebar:
           unsafe_allow_html=True,
       )
 
-    if st.button("Limpar Carrinho"):
+    if st.button("Limpar Carrinho", key="sidebar_clear"):
       st.session_state.carrinho = []
       st.rerun()
 
 # -------------------------------------------------------------
-# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS)
+# ÁREA PRINCIPAL (BANNER + CARRINHO TOPO + AVISOS + GRID)
 # -------------------------------------------------------------
 
 # Banner no topo
@@ -335,15 +348,79 @@ if os.path.exists("banner.jpg"):
 elif os.path.exists("banner.png"):
   st.image("banner.png", use_container_width=True)
 
-st.title("⚽ Catálogo Oficial de Camisas")
+# 1. BOTÃO/RESUMO DO CARRINHO VISÍVEL DIRETO NO TOPO DA PÁGINA
+total_itens = len(st.session_state.carrinho)
+val_total = total_itens * 140.00
 
-# Aviso em destaque sobre o pedido mínimo, frete grátis e o desconto
+col_top1, col_top2 = st.columns([2, 1])
+
+with col_top1:
+  st.markdown("### ⚽ Ramos Sports")
+
+with col_top2:
+  # Expander de Carrinho visível logo acima da grid
+  carrinho_titulo = f"🛒 Carrinho ({total_itens} peças — R$ {val_total:,.2f})".replace(
+      ".", ","
+  )
+  with st.expander(carrinho_titulo, expanded=(total_itens > 0)):
+    if total_itens == 0:
+      st.write("Seu carrinho está vazio (Mínimo: 2 peças).")
+    else:
+      for idx, item in enumerate(st.session_state.carrinho):
+        ca1, ca2 = st.columns([4, 1])
+        with ca1:
+          st.write(f"• {item['time']} ({item['modelo']})")
+        with ca2:
+          if st.button("❌", key=f"top_del_{idx}"):
+            st.session_state.carrinho.pop(idx)
+            st.rerun()
+
+      if total_itens < 2:
+        st.warning("Mínimo de 2 peças para enviar o pedido.")
+      else:
+        msg = (
+            f"Olá, Ramos Sports! Gostaria de fazer um pedido de {total_itens}"
+            " camisas (Frete Grátis):\n\n"
+        )
+        for item in st.session_state.carrinho:
+          msg += f"• {item['time']} ({item['modelo']})\n"
+        msg += f"\nTotal: R$ {val_total:,.2f}"
+        if total_itens >= 3:
+          msg += "\n*(Cliente apto ao desconto especial de 3+ peças)*"
+
+        url_wa = (
+            f"https://wa.me/{SEU_NUMERO_WHATSAPP}?text={urllib.parse.quote(msg)}"
+        )
+
+        st.markdown(
+            f'<a href="{url_wa}" target="_blank">'
+            '<button style="background-color: #25D366; color: white; border: none; '
+            "padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; "
+            'margin-top: 5px;">Finalizar Pedido no WhatsApp</button></a>',
+            unsafe_allow_html=True,
+        )
+
+        if st.button("Limpar Carrinho", key="top_clear"):
+          st.session_state.carrinho = []
+          st.rerun()
+
+# 2. AVISO PARA LOCALIZAÇÃO DO MENU DE FILTROS NO MOBILE
+st.markdown(
+    """
+    <div class="filter-notice">
+        🔍 <b>Dica:</b> Para pesquisar seu time ou filtrar por país, toque no menu <b>( ☰ )</b> no canto superior esquerdo!
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
+# 3. BANNER DE REGRAS E OFERTAS DA LOJA
 st.markdown(
     """
     <div class="promo-banner">
         📌 <b>Regras da Loja:</b> Pedido mínimo de <b>2 peças</b>.<br>
-        📦 <b>Frete Grátis</b> para todo o Brasil em qualquer pedido!<br>
-        🎁 <b>Oferta Especial:</b> Na compra de <b>3 ou mais peças</b>, você ganha um <b>desconto especial</b> no fechamento do seu pedido!
+        📦 <b>Frete Grátis</b> para todo o Brasil!<br>
+        🎁 <b>Oferta Especial:</b> Na compra de <b>3 ou mais peças</b>, você ganha um <b>desconto especial</b>!
     </div>
 """,
     unsafe_allow_html=True,
@@ -380,11 +457,11 @@ produtos_filtrados.sort(key=prioridade_destaque)
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
+  # Define colunas (no mobile, CSS reduz a 2 por linha de forma limpa)
   cols_por_linha = 3
   grid_colunas = st.columns(cols_por_linha)
 
   for i, camisa in enumerate(produtos_filtrados):
-    # Distribui os itens cíclicamente entre as 3 colunas
     col_atual = grid_colunas[i % cols_por_linha]
 
     with col_atual:
@@ -400,7 +477,7 @@ else:
             unsafe_allow_html=True,
         )
 
-        # 2. Tag de Modelo formatado
+        # 2. Tag de Modelo
         st.markdown(
             f"<div class='tag-modelo'>Modelo: {camisa['modelo_formatado']}</div>",
             unsafe_allow_html=True,
