@@ -35,18 +35,18 @@ st.markdown("""
     .main {
         background-color: #f4f6f9;
     }
-    /* Grade flexível com 3 colunas por linha */
+    /* Cartão Flexível com altura fixa perfeita para 3 colunas */
     .card-produto {
         background: white;
-        padding: 18px;
+        padding: 16px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        border: 1px solid #e9ecef;
+        border: 1px set #e9ecef;
         margin-bottom: 20px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 480px; /* Altura ideal e espaçosa para 3 colunas */
+        height: 490px;
     }
     .card-content {
         display: flex;
@@ -55,14 +55,15 @@ st.markdown("""
         text-align: center;
         flex-grow: 1;
     }
-    /* Padroniza todas as fotos para um tamanho maior e confortável */
-    .card-produto img {
+    /* Controle absoluto da imagem via HTML/CSS para evitar distorções */
+    .img-produto {
         width: 100% !important;
         height: 220px !important;
         object-fit: contain !important;
         background-color: #f8f9fa;
         border-radius: 8px;
-        padding: 5px;
+        padding: 4px;
+        margin-bottom: 10px;
     }
     .badge-destaque {
         background-color: #ff4b4b;
@@ -195,7 +196,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE DE 3 COLUNAS POR LINHA ---
+    # --- GRADE DE 3 COLUNAS COM RENDERIZAÇÃO HTML SEGURA ---
     colunas_por_linha = 3
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -212,10 +213,17 @@ else:
                     st.markdown('<span class="badge-destaque">🔥 MAIS VENDIDO</span>', unsafe_allow_html=True)
 
                 caminho_img = camisa.get("nome_arquivo")
+                
+                # Renderiza a imagem usando tag HTML direta para respeitar rigorosamente o CSS de tamanho
+                import base64
                 if caminho_img and os.path.exists(caminho_img):
-                    st.image(caminho_img)
+                    with open(caminho_img, "rb") as image_file:
+                        encoded_string = base64.b64encode(image_file.read()).decode()
+                    ext = caminho_img.split('.')[-1].lower()
+                    mime = f"image/{ext}" if ext in ['jpg', 'jpeg', 'png', 'webp'] else "image/jpeg"
+                    st.markdown(f'<img src="data:{mime};base64,{encoded_string}" class="img-produto">', unsafe_allow_html=True)
                 else:
-                    st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
+                    st.markdown('<img src="https://via.placeholder.com/300?text=Foto+Indispon%C3%ADvel" class="img-produto">', unsafe_allow_html=True)
 
                 st.markdown(f"**{camisa['time']}**")
                 
