@@ -112,58 +112,56 @@ else:
             st.markdown("## ⚽ RAMOS SPORTS")
         
         st.markdown("---")
-        st.markdown("### 🛒 Carrinho de Compras")
         
-        st.info("ℹ️ **Regras:**\n- Pedido mínimo: **2 peças**\n- **Pedidos com 3 ou mais peças você ganha um desconto especial!**")
-
+        # Carrinho em segundo plano (Oculto num Expander limpo)
         carrinho = st.session_state.carrinho
+        qtd_itens = len(carrinho)
         
-        if len(carrinho) > 0:
-            st.markdown(f"**Itens selecionados ({len(carrinho)}):**")
-            
-            for idx, item in enumerate(carrinho):
-                col_i1, col_i2 = st.columns([5, 1])
-                nome_exibir = limpar_nome_clube(item['time'])
-                versao_str = f" ({item['versao']})" if item.get('versao') else ""
-                col_i1.markdown(f"• {nome_exibir}{versao_str}")
-                if col_i2.button("❌", key=f"del_{idx}", help="Remover item"):
-                    carrinho.pop(idx)
-                    st.rerun()
-
-            st.markdown("---")
-            
-            if len(carrinho) < 2:
-                st.warning("⚠️ Adicione pelo menos **2 peças** para fechar o pedido.")
-            else:
-                st.success("✅ Pedido mínimo atingido!")
-                if len(carrinho) >= 3:
-                    st.markdown("🎉 **Desconto especial aplicado!**")
-
-                texto_pedido = "Olá! Gostaria de encomendar as seguintes camisas na Ramos Sports:\n\n"
-                for item in carrinho:
+        with st.expander(f"🛒 Ver Meu Carrinho ({qtd_itens} itens)", expanded=False):
+            if qtd_itens > 0:
+                for idx, item in enumerate(carrinho):
+                    col_i1, col_i2 = st.columns([5, 1])
                     nome_exibir = limpar_nome_clube(item['time'])
-                    versao_str = f" - Versão {item['versao']}" if item.get('versao') else ""
-                    texto_pedido += f"• {nome_exibir}{versao_str} ({item['preco']})\n"
-                
-                if len(carrinho) >= 3:
-                    texto_pedido += "\n*(Aplicar desconto especial de 3 ou mais peças)*"
-                
-                texto_codificado = urllib.parse.quote(texto_pedido)
-                link_wpp_final = f"https://wa.me/5511999999999?text={texto_codificado}"
+                    versao_str = f" ({item['versao']})" if item.get('versao') else ""
+                    col_i1.markdown(f"• {nome_exibir}{versao_str}")
+                    if col_i2.button("❌", key=f"del_{idx}", help="Remover item"):
+                        carrinho.pop(idx)
+                        st.rerun()
 
-                st.markdown(
-                    f'<a href="{link_wpp_final}" target="_blank" style="text-decoration:none;">'
-                    '<button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">'
-                    '💬 Enviar Pedido no WhatsApp'
-                    '</button></a>',
-                    unsafe_allow_html=True
-                )
-            
-            if st.button("🗑️ Limpar Carrinho", use_container_width=True):
-                st.session_state.carrinho = []
-                st.rerun()
-        else:
-            st.markdown("_Seu carrinho está vazio._")
+                st.markdown("---")
+                
+                if qtd_itens < 2:
+                    st.warning("⚠️ Adicione pelo menos **2 peças** para liberar o envio do pedido.")
+                else:
+                    st.success("✅ Pedido mínimo atingido!")
+                    if qtd_itens >= 3:
+                        st.markdown("🎉 **Desconto especial aplicado!**")
+
+                    texto_pedido = "Olá! Gostaria de encomendar as seguintes camisas na Ramos Sports:\n\n"
+                    for item in carrinho:
+                        nome_exibir = limpar_nome_clube(item['time'])
+                        versao_str = f" - Versão {item['versao']}" if item.get('versao') else ""
+                        texto_pedido += f"• {nome_exibir}{versao_str} ({item['preco']})\n"
+                    
+                    if qtd_itens >= 3:
+                        texto_pedido += "\n*(Aplicar desconto especial de 3 ou mais peças)*"
+                    
+                    texto_codificado = urllib.parse.quote(texto_pedido)
+                    link_wpp_final = f"https://wa.me/5511999999999?text={texto_codificado}"
+
+                    st.markdown(
+                        f'<a href="{link_wpp_final}" target="_blank" style="text-decoration:none;">'
+                        '<button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">'
+                        '💬 Enviar Pedido no WhatsApp'
+                        '</button></a>',
+                        unsafe_allow_html=True
+                    )
+                
+                if st.button("🗑️ Limpar Carrinho", use_container_width=True):
+                    st.session_state.carrinho = []
+                    st.rerun()
+            else:
+                st.markdown("_Seu carrinho está vazio._")
 
         st.markdown("---")
         st.header("🔍 Buscar no Catálogo")
@@ -203,21 +201,6 @@ else:
                 caminho_img = camisa.get("nome_arquivo")
                 if caminho_img and os.path.exists(caminho_img):
                     st.image(caminho_img)
-                    
-                    # Codifica a imagem em base64 para abrir em tela cheia/nova aba com tamanho grande ao clicar
-                    import base64
-                    with open(caminho_img, "rb") as f_img:
-                        b64_data = base64.b64encode(f_img.read()).decode()
-                    ext_img = caminho_img.split('.')[-1].lower()
-                    mime_tipo = f"image/{ext_img}" if ext_img in ['jpg', 'jpeg', 'png', 'webp'] else "image/jpeg"
-                    
-                    st.markdown(
-                        f'<div style="text-align: center; margin-bottom: 8px;">'
-                        f'<a href="data:{mime_tipo};base64,{b64_data}" target="_blank" style="font-size: 13px; color: #0d6efd; text-decoration: none; font-weight: 600;">'
-                        f'🔍 Ver foto em tamanho real'
-                        f'</a></div>',
-                        unsafe_allow_html=True
-                    )
                 else:
                     st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
 
@@ -235,7 +218,7 @@ else:
                 
                 if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}"):
                     st.session_state.carrinho.append(camisa)
-                    st.success(f"{nome_limpo} adicionado!")
+                    st.success(f"{nome_limpo} adicionado ao carrinho!")
                     st.rerun()
                 
                 st.markdown("---")
