@@ -29,12 +29,13 @@ def obter_prioridade_time(camisa):
             return index
     return 999  # Se não for popular, vai para o final da lista
 
-# --- ESTILO E PADRONIZAÇÃO DE IMAGENS (CSS) ---
+# --- ESTILO E ALINHAMENTO RIGOROSO DOS CARTÕES (CSS) ---
 st.markdown("""
     <style>
     .main {
         background-color: #f4f6f9;
     }
+    /* Grade flexível para forçar altura idêntica em todos os cartões da linha */
     .card-produto {
         background: white;
         padding: 16px;
@@ -45,13 +46,23 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        height: 460px; /* Altura fixa rigorosa para alinhar perfeitamente os botões */
     }
-    /* Padroniza o tamanho de todas as fotos para ficarem iguais e simétricas */
+    .card-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        flex-grow: 1;
+    }
+    /* Padroniza todas as fotos para o mesmo bloco de tamanho */
     .card-produto img {
         width: 100% !important;
-        height: 250px !important;
-        object-fit: cover !important; /* Corta perfeitamente as pontas sem distorcer a proporção */
+        height: 200px !important;
+        object-fit: contain !important; /* Mostra a foto inteira sem cortar, centralizada no bloco */
+        background-color: #f8f9fa;
         border-radius: 8px;
+        padding: 5px;
     }
     .badge-destaque {
         background-color: #ff4b4b;
@@ -61,7 +72,8 @@ st.markdown("""
         font-size: 11px;
         font-weight: bold;
         display: inline-block;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
+        align-self: flex-start;
     }
     .stButton button {
         border-radius: 8px;
@@ -69,7 +81,7 @@ st.markdown("""
         background-color: #0d6efd;
         color: white;
         width: 100%;
-        margin-top: 10px;
+        margin-top: auto; /* Empurra o botão sempre para a base exata do cartão */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -171,7 +183,7 @@ else:
     # --- FILTRAGEM ---
     camisas_filtradas = camisas
     if pais_selecionado != "Todos":
-        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
+        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral"] == pais_selecionado]
     if busca_clube.strip():
         camisas_filtradas = [c for c in camisas_filtradas if busca_clube.lower() in c["time"].lower()]
 
@@ -179,11 +191,11 @@ else:
 
     # --- CORPO PRINCIPAL DO SITE ---
     st.title("⚽ Ramos Sports - Catálogo Oficial")
-    st.markdown("### 📢 **Pedidos com 3 ou mais peças você ganha um desconto especial** *(Mínimo de 2 peças por pedido)*")
+    st.markdown("### 📢 **Pedidos com 3 ou mais peças você ganha um despejo especial** *(Mínimo de 2 peças por pedido)*")
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE PADRÃO DE 4 COLUNAS COM IMAGENS PADRONIZADAS ---
+    # --- GRADE PADRÃO DE 4 COLUNAS COM ALINHAMENTO PERFEITO ---
     colunas_por_linha = 4
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -193,6 +205,7 @@ else:
         for idx, camisa in enumerate(grupo_camisas):
             with cols[idx]:
                 st.markdown('<div class="card-produto">', unsafe_allow_html=True)
+                st.markdown('<div class="card-content">', unsafe_allow_html=True)
                 
                 e_popular = obter_prioridade_time(camisa) < 999
                 if e_popular:
@@ -214,9 +227,12 @@ else:
                     
                 st.markdown(f"💰 **{camisa['preco']}**")
                 
+                st.markdown('</div>', unsafe_allow_html=True) # Fecha card-content
+                
+                # Botão fixo alinhado na base
                 if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}"):
                     st.session_state.carrinho.append(camisa)
                     st.success(f"{camisa['time']} adicionado!")
                     st.rerun()
 
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True) # Fecha card-produto
