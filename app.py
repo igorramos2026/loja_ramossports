@@ -29,7 +29,7 @@ def obter_prioridade_time(camisa):
             return index
     return 999  # Se não for popular, vai para o final da lista
 
-# --- OTIMIZAÇÃO DE ESTILO E DESIGN ASSIMÉTRICO (CSS) ---
+# --- OTIMIZAÇÃO DE ESTILO (CSS) ---
 st.markdown("""
     <style>
     .main {
@@ -37,12 +37,12 @@ st.markdown("""
     }
     .card-produto {
         background: white;
-        padding: 18px;
-        border-radius: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid #e9ecef;
         margin-bottom: 20px;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-align: center;
     }
     .badge-destaque {
         background-color: #ff4b4b;
@@ -73,7 +73,7 @@ def carregar_dados():
     if os.path.exists("camisas.json"):
         with open("camisas.json", "r", encoding="utf-8") as f:
             dados = json.load(f)
-            # Tenta preencher a propriedade 'pais' a partir do caminho do arquivo se não existir no JSON
+            # Preenche a propriedade 'pais' caso não exista no JSON
             for c in dados:
                 if "pais" not in c or not c["pais"]:
                     caminho = c.get("nome_arquivo", "")
@@ -101,7 +101,7 @@ else:
         st.markdown("---")
         st.markdown("### 🛒 Carrinho de Compras")
         
-        # Frase Promocional Atualizada
+        # Frase Promocional
         st.info("ℹ️ **Regras:**\n- Pedido mínimo: **2 peças**\n- **Pedidos com 3 ou mais peças você ganha um desconto especial!**")
 
         carrinho = st.session_state.carrinho
@@ -111,7 +111,8 @@ else:
             
             for idx, item in enumerate(carrinho):
                 col_i1, col_i2 = st.columns([5, 1])
-                col_i1.markdown(f"• {item['time']} ({item['versao']})")
+                versao_str = f" ({item['versao']})" if item.get('versao') else ""
+                col_i1.markdown(f"• {item['time']}{versao_str}")
                 if col_i2.button("❌", key=f"del_{idx}", help="Remover item"):
                     carrinho.pop(idx)
                     st.rerun()
@@ -127,13 +128,14 @@ else:
 
                 texto_pedido = "Olá! Gostaria de encomendar as seguintes camisas na Ramos Sports:\n\n"
                 for item in carrinho:
-                    texto_pedido += f"• {item['time']} - Versão {item['versao']} ({item['preco']})\n"
+                    versao_str = f" - Versão {item['versao']}" if item.get('versao') else ""
+                    texto_pedido += f"• {item['time']}{versao_str} ({item['preco']})\n"
                 
                 if len(carrinho) >= 3:
                     texto_pedido += "\n*(Aplicar desconto especial de 3 ou mais peças)*"
                 
                 texto_codificado = urllib.parse.quote(texto_pedido)
-                # Altere para o seu WhatsApp real
+                # Altere para o seu número real do WhatsApp
                 link_wpp_final = f"https://wa.me/5511999999999?text={texto_codificado}"
 
                 st.markdown(
@@ -151,22 +153,14 @@ else:
             st.markdown("_Seu carrinho está vazio._")
 
         st.markdown("---")
-        st.header("🔍 Filtrar Catálogo")
+        st.header("🔍 Buscar no Catálogo")
 
-        # 1. Pesquisa Rápida por Nome de Clube
+        # 1. Pesquisa Direta por Nome de Clube
         busca_clube = st.text_input("🔎 Pesquisar Clube", placeholder="Ex: Flamengo, Real Madrid...")
 
-        # 2. Filtro por País/Pasta
+        # 2. Filtro por País / Liga
         paises_disponiveis = ["Todos"] + sorted(list(set(c.get("pais", "Geral") for c in camisas)))
         pais_selecionado = st.selectbox("Selecione o País / Liga", paises_disponiveis)
-
-        # 3. Filtro por Seleção na Lista de Clubes
-        clubes_disponiveis = ["Todos"] + sorted(list(set(c["time"] for c in camisas)))
-        clube_selecionado = st.selectbox("Selecione o Clube (Lista)", clubes_disponiveis)
-
-        # 4. Filtro por Versão
-        versoes_disponiveis = ["Todas"] + sorted(list(set(c["versao"] for c in camisas)))
-        versao_selecionada = st.selectbox("Selecione a Versão", versoes_disponiveis)
 
     # --- FILTRAGEM MULTICRITÉRIO ---
     camisas_filtradas = camisas
@@ -178,14 +172,6 @@ else:
     # Filtro por Busca Digitada
     if busca_clube.strip():
         camisas_filtradas = [c for c in camisas_filtradas if busca_clube.lower() in c["time"].lower()]
-        
-    # Filtro por Seleção na Lista
-    if clube_selecionado != "Todos":
-        camisas_filtradas = [c for c in camisas_filtradas if c["time"] == clube_selecionado]
-        
-    # Filtro por Versão
-    if versao_selecionada != "Todas":
-        camisas_filtradas = [c for c in camisas_filtradas if c["versao"] == versao_selecionada]
 
     # Ordena para colocar os mais populares no topo
     camisas_ordenadas = sorted(camisas_filtradas, key=obter_prioridade_time)
@@ -196,19 +182,12 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE ASSIMÉTRICA INTUITIVA ---
-    itens_por_linha = 3
+    # --- GRADE PADRÃO DE 4 COLUNAS ---
+    colunas_por_linha = 4
     
-    for i in range(0, len(camisas_ordenadas), itens_por_linha):
-        grupo_camisas = camisas_ordenadas[i:i + itens_por_linha]
-        
-        linha_index = i // itens_por_linha
-        if linha_index % 2 == 0:
-            proporcoes = [1.3, 1.0, 1.0]
-        else:
-            proporcoes = [1.0, 1.0, 1.3]
-
-        cols = st.columns(proporcoes[:len(grupo_camisas)])
+    for i in range(0, len(camisas_ordenadas), colunas_por_linha):
+        grupo_camisas = camisas_ordenadas[i:i + colunas_por_linha]
+        cols = st.columns(colunas_por_linha)
         
         for idx, camisa in enumerate(grupo_camisas):
             with cols[idx]:
@@ -224,10 +203,16 @@ else:
                 else:
                     st.image("https://via.placeholder.com/300?text=Foto+Indisponível", use_container_width=True)
 
-                st.markdown(f"**{camisa['time']}**")
+                # Exibe somente o nome do clube
+                st.markdown(f"### {camisa['time']}")
+                
                 if camisa.get("pais"):
                     st.caption(f"📍 {camisa['pais']}")
-                st.markdown(f"Versão: *{camisa['versao']}*")
+                
+                # Exibe a versão separadamente
+                if camisa.get("versao"):
+                    st.markdown(f"Versão: **{camisa['versao']}**")
+                    
                 st.markdown(f"💰 **{camisa['preco']}**")
                 
                 if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}", use_container_width=True):
