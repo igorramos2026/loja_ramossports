@@ -180,10 +180,10 @@ else:
         paises_disponiveis = ["Todos"] + sorted(list(set(c.get("pais", "Geral") for c in camisas)))
         pais_selecionado = st.selectbox("Selecione o País / Liga", paises_disponiveis)
 
-    # --- FILTRAGEM ---
+    # --- FILTRAGEM CORRIGIDA ---
     camisas_filtradas = camisas
     if pais_selecionado != "Todos":
-        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral"] == pais_selecionado]
+        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
     if busca_clube.strip():
         camisas_filtradas = [c for c in camisas_filtradas if busca_clube.lower() in c["time"].lower()]
 
@@ -191,7 +191,7 @@ else:
 
     # --- CORPO PRINCIPAL DO SITE ---
     st.title("⚽ Ramos Sports - Catálogo Oficial")
-    st.markdown("### 📢 **Pedidos com 3 ou mais peças você ganha um despejo especial** *(Mínimo de 2 peças por pedido)*")
+    st.markdown("### 📢 **Pedidos com 3 ou mais peças você ganha um desconto especial** *(Mínimo de 2 peças por pedido)*")
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
