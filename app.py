@@ -29,7 +29,7 @@ def obter_prioridade_time(camisa):
             return index
     return 999  # Se não for popular, vai para o final da lista
 
-# --- OTIMIZAÇÃO DE ESTILO (CSS) ---
+# --- ESTILO E ALINHAMENTO SIMÉTRICO DOS CARTÕES (CSS) ---
 st.markdown("""
     <style>
     .main {
@@ -42,7 +42,13 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid #e9ecef;
         margin-bottom: 20px;
-        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 440px; /* Altura fixa para todos os cartões ficarem simétricos */
+    }
+    .card-content {
+        flex-grow: 1;
     }
     .badge-destaque {
         background-color: #ff4b4b;
@@ -59,6 +65,7 @@ st.markdown("""
         font-weight: 600;
         background-color: #0d6efd;
         color: white;
+        width: 100%;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -73,7 +80,6 @@ def carregar_dados():
     if os.path.exists("camisas.json"):
         with open("camisas.json", "r", encoding="utf-8") as f:
             dados = json.load(f)
-            # Preenche a propriedade 'pais' caso não exista no JSON
             for c in dados:
                 if "pais" not in c or not c["pais"]:
                     caminho = c.get("nome_arquivo", "")
@@ -135,7 +141,6 @@ else:
                     texto_pedido += "\n*(Aplicar desconto especial de 3 ou mais peças)*"
                 
                 texto_codificado = urllib.parse.quote(texto_pedido)
-                # Altere para o seu número real do WhatsApp
                 link_wpp_final = f"https://wa.me/5511999999999?text={texto_codificado}"
 
                 st.markdown(
@@ -155,25 +160,17 @@ else:
         st.markdown("---")
         st.header("🔍 Buscar no Catálogo")
 
-        # 1. Pesquisa Direta por Nome de Clube
         busca_clube = st.text_input("🔎 Pesquisar Clube", placeholder="Ex: Flamengo, Real Madrid...")
-
-        # 2. Filtro por País / Liga
         paises_disponiveis = ["Todos"] + sorted(list(set(c.get("pais", "Geral") for c in camisas)))
         pais_selecionado = st.selectbox("Selecione o País / Liga", paises_disponiveis)
 
-    # --- FILTRAGEM MULTICRITÉRIO ---
+    # --- FILTRAGEM ---
     camisas_filtradas = camisas
-    
-    # Filtro por País/Liga
     if pais_selecionado != "Todos":
         camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
-    
-    # Filtro por Busca Digitada
     if busca_clube.strip():
         camisas_filtradas = [c for c in camisas_filtradas if busca_clube.lower() in c["time"].lower()]
 
-    # Ordena para colocar os mais populares no topo
     camisas_ordenadas = sorted(camisas_filtradas, key=obter_prioridade_time)
 
     # --- CORPO PRINCIPAL DO SITE ---
@@ -182,7 +179,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE PADRÃO DE 4 COLUNAS ---
+    # --- GRADE PADRÃO DE 4 COLUNAS COM ALINHAMENTO SIMÉTRICO ---
     colunas_por_linha = 4
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -192,6 +189,7 @@ else:
         for idx, camisa in enumerate(grupo_camisas):
             with cols[idx]:
                 st.markdown('<div class="card-produto">', unsafe_allow_html=True)
+                st.markdown('<div class="card-content">', unsafe_allow_html=True)
                 
                 e_popular = obter_prioridade_time(camisa) < 999
                 if e_popular:
@@ -203,21 +201,22 @@ else:
                 else:
                     st.image("https://via.placeholder.com/300?text=Foto+Indisponível", use_container_width=True)
 
-                # Exibe somente o nome do clube
-                st.markdown(f"### {camisa['time']}")
+                st.markdown(f"**{camisa['time']}**")
                 
                 if camisa.get("pais"):
                     st.caption(f"📍 {camisa['pais']}")
                 
-                # Exibe a versão separadamente
                 if camisa.get("versao"):
-                    st.markdown(f"Versão: **{camisa['versao']}**")
+                    st.markdown(f"Versão: *{camisa['versao']}*")
                     
                 st.markdown(f"💰 **{camisa['preco']}**")
                 
-                if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}", use_container_width=True):
+                st.markdown('</div>', unsafe_allow_html=True)  # Fim do conteúdo interno
+                
+                # Botão fixo na base do cartão
+                if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}", use_container_width=True):
                     st.session_state.carrinho.append(camisa)
                     st.success(f"{camisa['time']} adicionado!")
                     st.rerun()
 
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)  # Fim do card-produto
