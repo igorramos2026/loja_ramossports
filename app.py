@@ -41,12 +41,12 @@ st.markdown("""
         padding: 16px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        border: 1px set #e9ecef;
+        border: 1px solid #e9ecef;
         margin-bottom: 20px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 490px;
+        height: 500px;
     }
     .card-content {
         display: flex;
@@ -55,15 +55,22 @@ st.markdown("""
         text-align: center;
         flex-grow: 1;
     }
-    /* Controle absoluto da imagem via HTML/CSS para evitar distorções */
-    .img-produto {
+    /* Padroniza perfeitamente o container interno da imagem do Streamlit */
+    div[data-testid="stImage"] {
         width: 100% !important;
-        height: 220px !important;
-        object-fit: contain !important;
+        height: 210px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background-color: #f8f9fa;
         border-radius: 8px;
-        padding: 4px;
         margin-bottom: 10px;
+        overflow: hidden;
+    }
+    div[data-testid="stImage"] img {
+        max-height: 200px !important;
+        object-fit: contain !important;
+        width: auto !important;
     }
     .badge-destaque {
         background-color: #ff4b4b;
@@ -184,7 +191,7 @@ else:
     # --- FILTRAGEM ---
     camisas_filtradas = camisas
     if pais_selecionado != "Todos":
-        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
+        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral"] == pais_selecionado]
     if busca_clube.strip():
         camisas_filtradas = [c for c in camisas_filtradas if busca_clube.lower() in c["time"].lower()]
 
@@ -196,7 +203,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE DE 3 COLUNAS COM RENDERIZAÇÃO HTML SEGURA ---
+    # --- GRADE DE 3 COLUNAS COM ALINHAMENTO PERFEITO ---
     colunas_por_linha = 3
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -213,17 +220,10 @@ else:
                     st.markdown('<span class="badge-destaque">🔥 MAIS VENDIDO</span>', unsafe_allow_html=True)
 
                 caminho_img = camisa.get("nome_arquivo")
-                
-                # Renderiza a imagem usando tag HTML direta para respeitar rigorosamente o CSS de tamanho
-                import base64
                 if caminho_img and os.path.exists(caminho_img):
-                    with open(caminho_img, "rb") as image_file:
-                        encoded_string = base64.b64encode(image_file.read()).decode()
-                    ext = caminho_img.split('.')[-1].lower()
-                    mime = f"image/{ext}" if ext in ['jpg', 'jpeg', 'png', 'webp'] else "image/jpeg"
-                    st.markdown(f'<img src="data:{mime};base64,{encoded_string}" class="img-produto">', unsafe_allow_html=True)
+                    st.image(caminho_img)
                 else:
-                    st.markdown('<img src="https://via.placeholder.com/300?text=Foto+Indispon%C3%ADvel" class="img-produto">', unsafe_allow_html=True)
+                    st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
 
                 st.markdown(f"**{camisa['time']}**")
                 
