@@ -32,8 +32,7 @@ def obter_prioridade_time(camisa):
 
 def limpar_nome_clube(nome):
     """Remove sufixos numéricos ou romanos indesejados (ex: 'Palmeiras lii' -> 'Palmeiras')"""
-    # Remove algarismos romanos ou números no final do nome (ex: i, ii, iii, iv, 1, 2, 3)
-    nome_limpo = re.sub(r'\b(i{1,3}|iv|v|vi{0,3}|\d+)\b$', '', nome, flags=urllib.parse.re.IGNORECASE if 'urllib' in globals() else 0).strip()
+    nome_limpo = re.sub(r'\b(i{1,3}|iv|v|vi{0,3}|\d+)\b$', '', nome, flags=re.IGNORECASE).strip()
     return nome_limpo if nome_limpo else nome
 
 # --- ESTILO E PADRONIZAÇÃO (CSS) ---
@@ -188,7 +187,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE DE 3 COLUNAS COM EXPANDER DE FOTO ---
+    # --- GRADE DE 3 COLUNAS ---
     colunas_por_linha = 3
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -204,9 +203,21 @@ else:
                 caminho_img = camisa.get("nome_arquivo")
                 if caminho_img and os.path.exists(caminho_img):
                     st.image(caminho_img)
-                    # Expander opcional para ampliar a foto
-                    with st.expander("🔍 Ver foto ampliada"):
-                        st.image(caminho_img, use_container_width=True)
+                    
+                    # Codifica a imagem em base64 para abrir em tela cheia/nova aba com tamanho grande ao clicar
+                    import base64
+                    with open(caminho_img, "rb") as f_img:
+                        b64_data = base64.b64encode(f_img.read()).decode()
+                    ext_img = caminho_img.split('.')[-1].lower()
+                    mime_tipo = f"image/{ext_img}" if ext_img in ['jpg', 'jpeg', 'png', 'webp'] else "image/jpeg"
+                    
+                    st.markdown(
+                        f'<div style="text-align: center; margin-bottom: 8px;">'
+                        f'<a href="data:{mime_tipo};base64,{b64_data}" target="_blank" style="font-size: 13px; color: #0d6efd; text-decoration: none; font-weight: 600;">'
+                        f'🔍 Ver foto em tamanho real'
+                        f'</a></div>',
+                        unsafe_allow_html=True
+                    )
                 else:
                     st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
 
