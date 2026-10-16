@@ -35,10 +35,10 @@ st.markdown("""
     .main {
         background-color: #f4f6f9;
     }
-    /* Grade flexível para forçar altura idêntica em todos os cartões da linha */
+    /* Grade flexível com 3 colunas por linha */
     .card-produto {
         background: white;
-        padding: 16px;
+        padding: 18px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid #e9ecef;
@@ -46,7 +46,7 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 460px; /* Altura fixa rigorosa para alinhar perfeitamente os botões */
+        height: 480px; /* Altura ideal e espaçosa para 3 colunas */
     }
     .card-content {
         display: flex;
@@ -55,11 +55,11 @@ st.markdown("""
         text-align: center;
         flex-grow: 1;
     }
-    /* Padroniza todas as fotos para o mesmo bloco de tamanho */
+    /* Padroniza todas as fotos para um tamanho maior e confortável */
     .card-produto img {
         width: 100% !important;
-        height: 200px !important;
-        object-fit: contain !important; /* Mostra a foto inteira sem cortar, centralizada no bloco */
+        height: 220px !important;
+        object-fit: contain !important;
         background-color: #f8f9fa;
         border-radius: 8px;
         padding: 5px;
@@ -81,7 +81,7 @@ st.markdown("""
         background-color: #0d6efd;
         color: white;
         width: 100%;
-        margin-top: auto; /* Empurra o botão sempre para a base exata do cartão */
+        margin-top: auto;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -180,7 +180,7 @@ else:
         paises_disponiveis = ["Todos"] + sorted(list(set(c.get("pais", "Geral") for c in camisas)))
         pais_selecionado = st.selectbox("Selecione o País / Liga", paises_disponiveis)
 
-    # --- FILTRAGEM CORRIGIDA ---
+    # --- FILTRAGEM ---
     camisas_filtradas = camisas
     if pais_selecionado != "Todos":
         camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
@@ -195,8 +195,8 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE PADRÃO DE 4 COLUNAS COM ALINHAMENTO PERFEITO ---
-    colunas_por_linha = 4
+    # --- GRADE DE 3 COLUNAS POR LINHA ---
+    colunas_por_linha = 3
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
         grupo_camisas = camisas_ordenadas[i:i + colunas_por_linha]
