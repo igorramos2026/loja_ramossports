@@ -5,7 +5,6 @@ let carrinho = [];
 const CLUBES_EUROPA = ["real madrid", "barcelona", "paris saint germain", "psg", "manchester city", "bayern", "liverpool", "arsenal", "juventus", "milan"];
 const CLUBES_BRASIL = ["flamengo", "palmeiras", "corinthians", "sao paulo", "santos", "gremio", "internacional", "atletico mineiro", "botafogo", "fluminense", "vasco"];
 
-// Obtém o caminho base do repositório para evitar erros de rota no GitHub Pages
 function getBasePath() {
     const path = window.location.pathname;
     if (path.includes('/') && path.split('/')[1]) {
@@ -17,15 +16,12 @@ function getBasePath() {
     return './';
 }
 
-// Carrega o JSON de forma garantida no GitHub Pages
 window.addEventListener("DOMContentLoaded", () => {
     const jsonPath = getBasePath() + "camisas.json";
     
     fetch(jsonPath)
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}: Não foi possível carregar ${jsonPath}`);
-            }
+            if (!response.ok) throw new Error(`Erro ${response.status}`);
             return response.json();
         })
         .then(data => {
@@ -38,7 +34,7 @@ window.addEventListener("DOMContentLoaded", () => {
             const grid = document.getElementById("catalogo-grid");
             if (grid) {
                 grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ff4d4d; padding: 20px;">
-                    ⚠️ Erro ao carregar os dados (${error.message}). Verifique se o arquivo <b>camisas.json</b> está na raiz do repositório.
+                    ⚠️ Não foi possível carregar os produtos. Verifique o arquivo <b>camisas.json</b>.
                 </p>`;
             }
         });
@@ -49,7 +45,6 @@ function popularFiltroPaises(produtos) {
     if (!select) return;
     
     const paisesSet = new Set();
-    
     produtos.forEach(p => {
         let arq = p.nome_arquivo || p.imagem || p.foto || "";
         if (arq) {
@@ -63,7 +58,6 @@ function popularFiltroPaises(produtos) {
     });
 
     select.innerHTML = '<option value="Todos">🌍 Todos os Países/Ligas</option>';
-
     Array.from(paisesSet).sort().forEach(pais => {
         const option = document.createElement("option");
         option.value = pais;
@@ -90,14 +84,12 @@ function traduzirModelo(versaoOriginal) {
 
 function prioridadeDestaque(nomeLimpo) {
     const nomeLower = (nomeLimpo || "").toLowerCase();
-    
     let ranking = [];
     let maxLen = Math.max(CLUBES_EUROPA.length, CLUBES_BRASIL.length);
     for(let i = 0; i < maxLen; i++) {
         if (i < CLUBES_EUROPA.length) ranking.push(CLUBES_EUROPA[i]);
         if (i < CLUBES_BRASIL.length) ranking.push(CLUBES_BRASIL[i]);
     }
-
     for(let i = 0; i < ranking.length; i++) {
         if (nomeLower.includes(ranking[i])) return i;
     }
@@ -107,7 +99,6 @@ function prioridadeDestaque(nomeLimpo) {
 function filtrarProdutos() {
     const inputBusca = document.getElementById("input-busca");
     const selectPais = document.getElementById("select-pais");
-    
     const termoBusca = inputBusca ? inputBusca.value.toLowerCase() : "";
     const paisSelecionado = selectPais ? selectPais.value : "Todos";
 
@@ -125,20 +116,17 @@ function filtrarProdutos() {
         const matchBusca = p.nome_limpo.toLowerCase().includes(termoBusca);
         let caminhoArquivo = (p.nome_arquivo || p.imagem || p.foto || "").trim();
         if (caminhoArquivo.startsWith('/')) caminhoArquivo = caminhoArquivo.substring(1);
-        
         const matchPais = (paisSelecionado === "Todos" || caminhoArquivo.startsWith(paisSelecionado + "/"));
         return matchBusca && matchPais;
     });
 
     filtrados.sort((a, b) => prioridadeDestaque(a.nome_limpo) - prioridadeDestaque(b.nome_limpo));
-
     renderizarCatalogo(filtrados);
 }
 
 function renderizarCatalogo(produtos) {
     const grid = document.getElementById("catalogo-grid");
     if (!grid) return;
-    
     grid.innerHTML = "";
 
     if (produtos.length === 0) {
@@ -154,15 +142,11 @@ function renderizarCatalogo(produtos) {
         
         let arqOriginal = p.nome_arquivo || p.imagem || p.foto || "";
         let imgSrc = arqOriginal.trim();
-        if (imgSrc.startsWith('/')) {
-            imgSrc = imgSrc.substring(1);
-        }
-        
-        // Monta a URL completa do caminho do arquivo no repositório
+        if (imgSrc.startsWith('/')) imgSrc = imgSrc.substring(1);
         const fullImgUrl = basePath + encodeURI(imgSrc);
 
         card.innerHTML = `
-            <img src="${fullImgUrl}" alt="${p.nome_limpo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/250?text=Sem+Imagem';">
+            <img src="${fullImgUrl}" alt="${p.nome_limpo}" onclick="expandirImagem('${fullImgUrl}', '${p.nome_limpo} - ${p.modelo_formatado}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/250?text=Sem+Imagem';">
             <div class="card-title">${p.nome_limpo}</div>
             <div class="tag-modelo">Modelo: ${p.modelo_formatado}</div>
             <div class="tag-preco">R$ 140,00</div>
@@ -173,6 +157,22 @@ function renderizarCatalogo(produtos) {
     });
 }
 
+// FUNÇÕES DE EXPANDIR IMAGEM (ZOOM)
+function expandirImagem(src, titulo) {
+    const modal = document.getElementById("image-modal");
+    const img = document.getElementById("img-ampliada");
+    const caption = document.getElementById("caption-imagem");
+    
+    modal.style.display = "flex";
+    img.src = src;
+    caption.textContent = titulo;
+}
+
+function fecharImagem() {
+    document.getElementById("image-modal").style.display = "none";
+}
+
+// FUNÇÕES DO CARRINHO
 function adicionarCarrinho(id, time, modelo) {
     carrinho.push({ id, time, modelo, preco: 140.00 });
     atualizarCarrinhoUI();
