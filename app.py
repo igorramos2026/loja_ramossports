@@ -206,18 +206,20 @@ def prioridade_destaque(camisa):
   return (1, 0, nome)
 
 
-# Função para traduzir o modelo conforme a regra solicitada
+# Função robusta para traduzir o modelo independentemente do formato no JSON
 def traduzir_modelo(versao_original):
-  v_limpa = str(versao_original).strip()
-  v_upper = v_limpa.upper()
-  if v_upper == "I":
+  v_str = str(versao_original).strip().upper()
+  # Remove termos extras como "MODELO:", "VERSAO:", espaços e pontuações para isolar o identificador
+  v_limpo = re.sub(r"[^A-Z0-9]", "", v_str)
+
+  if v_limpo in ["I", "1", "MODELO1", "VERSAO1"]:
     return "Casa"
-  elif v_upper == "II":
+  elif v_limpo in ["II", "2", "MODELO2", "VERSAO2"]:
     return "Visitante"
-  elif v_upper == "III":
+  elif v_limpo in ["III", "3", "MODELO3", "VERSAO3"]:
     return "Terceiro Uniforme"
   else:
-    return v_limpa
+    return str(versao_original).strip()
 
 
 # -------------------------------------------------------------
