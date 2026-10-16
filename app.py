@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Grid Responsivo Mobile + Desktop)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Grid Forçado 2 Colunas Mobile)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -46,7 +46,7 @@ st.markdown(
         border: 1px solid #30363d !important;
     }
 
-    /* MOLDURA DO CARD ROBUSTA */
+    /* MOLDURA DO CARD */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #161b22 !important;
         border: 2px solid #f39c12 !important;
@@ -60,20 +60,20 @@ st.markdown(
     div[data-testid="stVerticalBlockBorderWrapper"] img {
         border-radius: 8px;
         object-fit: cover;
-        height: 190px !important;
+        height: 170px !important;
         width: 100% !important;
         border: 1px solid #30363d;
     }
 
     /* Nome do Clube */
     .card-title {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 800;
         color: #ffffff;
         text-align: center;
         margin-top: 6px;
         margin-bottom: 4px;
-        min-height: 36px;
+        min-height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -90,7 +90,7 @@ st.markdown(
         border-radius: 6px;
         font-weight: 700;
         text-align: center;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         margin-bottom: 4px;
     }
 
@@ -102,7 +102,7 @@ st.markdown(
         border-radius: 6px;
         font-weight: 800;
         text-align: center;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         margin-bottom: 4px;
     }
 
@@ -114,12 +114,12 @@ st.markdown(
         border-radius: 6px;
         font-weight: 700;
         text-align: center;
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         margin-bottom: 8px;
         text-transform: uppercase;
     }
 
-    /* Banners promocionais e alertas */
+    /* Banners e Alertas */
     .promo-banner {
         background-color: #1f2937;
         border-left: 5px solid #f39c12;
@@ -152,7 +152,7 @@ st.markdown(
         width: 100%;
         padding: 6px 10px;
         transition: all 0.3s ease;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
 
     .stButton > button:hover {
@@ -160,22 +160,21 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* REGRA CSS PARA MANTER 2 COLUNAS LADO A LADO NO MOBILE */
+    /* FORÇAR 2 COLUNAS LADO A LADO EM TELAS DE CELULAR */
     @media (max-width: 768px) {
-        /* Força colunas do streamlit a não quebrarem 100% da largura */
-        div[data-testid="stHorizontalBlock"] {
+        [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: wrap !important;
-            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
         }
-        div[data-testid="column"] {
-            width: 48% !important;
-            flex: 1 1 48% !important;
-            min-width: 48% !important;
+        [data-testid="column"] {
+            width: 50% !important;
+            flex: 1 1 50% !important;
+            min-width: 50% !important;
         }
         div[data-testid="stVerticalBlockBorderWrapper"] img {
-            height: 150px !important;
+            height: 130px !important;
         }
     }
     </style>
@@ -358,13 +357,10 @@ with col_top1:
   st.markdown("### ⚽ Ramos Sports")
 
 with col_top2:
-  # Expander de Carrinho visível logo acima da grid
-  carrinho_titulo = f"🛒 Carrinho ({total_itens} peças — R$ {val_total:,.2f})".replace(
-      ".", ","
-  )
+  carrinho_titulo = f"🛒 Carrinho ({total_itens} pçs)".replace(".", ",")
   with st.expander(carrinho_titulo, expanded=(total_itens > 0)):
     if total_itens == 0:
-      st.write("Seu carrinho está vazio (Mínimo: 2 peças).")
+      st.write("Carrinho vazio (Mín: 2 peças).")
     else:
       for idx, item in enumerate(st.session_state.carrinho):
         ca1, ca2 = st.columns([4, 1])
@@ -376,7 +372,7 @@ with col_top2:
             st.rerun()
 
       if total_itens < 2:
-        st.warning("Mínimo de 2 peças para enviar o pedido.")
+        st.warning("Mínimo de 2 peças.")
       else:
         msg = (
             f"Olá, Ramos Sports! Gostaria de fazer um pedido de {total_itens}"
@@ -395,8 +391,8 @@ with col_top2:
         st.markdown(
             f'<a href="{url_wa}" target="_blank">'
             '<button style="background-color: #25D366; color: white; border: none; '
-            "padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; "
-            'margin-top: 5px;">Finalizar Pedido no WhatsApp</button></a>',
+            "padding: 8px; border-radius: 8px; font-weight: bold; width: 100%; "
+            'margin-top: 5px;">Finalizar no WhatsApp</button></a>',
             unsafe_allow_html=True,
         )
 
@@ -453,55 +449,48 @@ for p in produtos:
 
 produtos_filtrados.sort(key=prioridade_destaque)
 
-# Exibição dos cards
+# Exibição dos cards em blocos de 3 colunas (forçando 2 colunas lado a lado no mobile via CSS)
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
-  # Define colunas (no mobile, CSS reduz a 2 por linha de forma limpa)
   cols_por_linha = 3
-  grid_colunas = st.columns(cols_por_linha)
+  
+  # Agrupa os produtos em linhas para renderizar perfeitamente o grid
+  for i in range(0, len(produtos_filtrados), cols_por_linha):
+    linha_produtos = produtos_filtrados[i:i + cols_por_linha]
+    grid_colunas = st.columns(cols_por_linha)
 
-  for i, camisa in enumerate(produtos_filtrados):
-    col_atual = grid_colunas[i % cols_por_linha]
+    for j, camisa in enumerate(linha_produtos):
+      with grid_colunas[j]:
+        with st.container(border=True):
+          if os.path.exists(camisa["nome_arquivo"]):
+            st.image(camisa["nome_arquivo"], use_container_width=True)
+          else:
+            st.info("Imagem indisponível")
 
-    with col_atual:
-      with st.container(border=True):
-        if os.path.exists(camisa["nome_arquivo"]):
-          st.image(camisa["nome_arquivo"], use_container_width=True)
-        else:
-          st.info("Imagem indisponível")
+          st.markdown(
+              f"<div class='card-title'>{camisa['nome_limpo']}</div>",
+              unsafe_allow_html=True,
+          )
+          st.markdown(
+              f"<div class='tag-modelo'>Modelo: {camisa['modelo_formatado']}</div>",
+              unsafe_allow_html=True,
+          )
+          st.markdown(
+              f"<div class='tag-preco'>{camisa['preco_fixo']}</div>",
+              unsafe_allow_html=True,
+          )
+          st.markdown(
+              "<div class='tag-frete'>🚚 Frete Grátis</div>",
+              unsafe_allow_html=True,
+          )
 
-        # 1. Nome limpo do clube
-        st.markdown(
-            f"<div class='card-title'>{camisa['nome_limpo']}</div>",
-            unsafe_allow_html=True,
-        )
-
-        # 2. Tag de Modelo
-        st.markdown(
-            f"<div class='tag-modelo'>Modelo: {camisa['modelo_formatado']}</div>",
-            unsafe_allow_html=True,
-        )
-
-        # 3. Tag de Preço Fixo (R$ 140,00)
-        st.markdown(
-            f"<div class='tag-preco'>{camisa['preco_fixo']}</div>",
-            unsafe_allow_html=True,
-        )
-
-        # 4. Tag de Frete Grátis
-        st.markdown(
-            "<div class='tag-frete'>🚚 Frete Grátis</div>",
-            unsafe_allow_html=True,
-        )
-
-        # 5. Botão de Adicionar ao Carrinho
-        if st.button("Adicionar ao Carrinho", key=f"btn_{camisa['id']}"):
-          st.session_state.carrinho.append({
-              "id": camisa["id"],
-              "time": camisa["nome_limpo"],
-              "modelo": camisa["modelo_formatado"],
-              "preco": 140.00,
-          })
-          st.success("Adicionado!")
-          st.rerun()
+          if st.button("Adicionar", key=f"btn_{camisa['id']}"):
+            st.session_state.carrinho.append({
+                "id": camisa["id"],
+                "time": camisa["nome_limpo"],
+                "modelo": camisa["modelo_formatado"],
+                "preco": 140.00,
+            })
+            st.success("Adicionado!")
+            st.rerun()
