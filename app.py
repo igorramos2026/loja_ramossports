@@ -15,23 +15,35 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Simetria, Cores e Tipografia)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Tema Escuro Unificado e Simetria)
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* Estilo geral da aplicação */
-    .stApp {
-        background-color: #0e1117;
-        color: #f5f5f5;
+    /* Fundo da aplicação principal e barra lateral unificados em tema escuro */
+    .stApp, div[data-testid="stSidebar"] {
+        background-color: #0e1117 !important;
+        color: #f5f5f5 !important;
     }
     
-    /* Titulos e textos com excelente legibilidade */
-    h1, h2, h3, h4, label {
+    /* Garantir fundo escuro para o conteúdo interno da sidebar */
+    section[data-testid="stSidebar"] > div {
+        background-color: #0e1117 !important;
+    }
+
+    /* Títulos, rótulos e textos na barra lateral e corpo principal */
+    h1, h2, h3, h4, label, p, span {
         color: #ffffff !important;
     }
-    
-    /* Container simétrico para o card de produto */
+
+    /* Estilização dos inputs/selects na sidebar */
+    div[data-testid="stSidebar"] input, div[data-testid="stSidebar"] select {
+        background-color: #161b22 !important;
+        color: #ffffff !important;
+        border: 1px solid #30363d !important;
+    }
+
+    /* Card do Produto com altura uniforme */
     div[data-testid="column"] > div[data-testid="stVerticalBlock"] {
         background-color: #161b22;
         border: 1px solid #30363d;
@@ -44,7 +56,7 @@ st.markdown(
         min-height: 480px;
     }
 
-    /* Ajuste para imagens simétricas */
+    /* Imagens padronizadas no card */
     div[data-testid="column"] img {
         border-radius: 8px;
         object-fit: cover;
@@ -74,7 +86,7 @@ st.markdown(
         margin-bottom: 10px;
     }
 
-    /* Estilização dos botões principais */
+    /* Botões Padrão (Amarelo / Preto) */
     .stButton > button {
         background-color: #f39c12;
         color: #000000 !important;
@@ -96,7 +108,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# CARREGAMENTO DOS DADOS E ORDENAÇÃO POR POPULARIDADE
+# CARREGAMENTO DOS DADOS E ORDENAÇÃO ALTERNADA (EUROPA + BRASIL)
 # -------------------------------------------------------------
 
 
@@ -110,20 +122,20 @@ def carregar_dados():
 
 produtos = carregar_dados()
 
-# Lista de clubes de alta demanda/populares
-CLUBES_POPULARES = [
+# Listas separadas de gigantes europeus e nacionais para intercalação no topo
+CLUBES_EUROPA = [
     "real madrid",
     "barcelona",
     "paris saint germain",
     "psg",
     "manchester city",
-    "manchester united",
     "bayern",
     "liverpool",
     "arsenal",
     "juventus",
     "milan",
-    "inter",
+]
+CLUBES_BRASIL = [
     "flamengo",
     "palmeiras",
     "corinthians",
@@ -137,12 +149,21 @@ CLUBES_POPULARES = [
     "vasco",
 ]
 
+# Monta ranking alternado: 1º Europa, 1º Brasil, 2º Europa, 2º Brasil...
+RANKING_INTERCALADO = []
+max_len = max(len(CLUBES_EUROPA), len(CLUBES_BRASIL))
+for i in range(max_len):
+  if i < len(CLUBES_EUROPA):
+    RANKING_INTERCALADO.append(CLUBES_EUROPA[i])
+  if i < len(CLUBES_BRASIL):
+    RANKING_INTERCALADO.append(CLUBES_BRASIL[i])
 
-def prioridade_popularidade(camisa):
+
+def prioridade_destaque(camisa):
   nome = camisa.get("nome_limpo", "").lower()
-  for i, clube in enumerate(CLUBES_POPULARES):
+  for index, clube in enumerate(RANKING_INTERCALADO):
     if clube in nome:
-      return (0, i, nome)
+      return (0, index, nome)
   return (1, 0, nome)
 
 
@@ -150,7 +171,6 @@ def prioridade_popularidade(camisa):
 # BARRA LATERAL (LOGO, FILTROS E CARRINHO)
 # -------------------------------------------------------------
 with st.sidebar:
-  # Logo da Ramos Sports
   if os.path.exists("logo.png"):
     st.image("logo.png", use_container_width=True)
 
@@ -160,7 +180,6 @@ with st.sidebar:
       "Buscar por time:", placeholder="Ex: Real Madrid, Flamengo..."
   )
 
-  # Extração dos países/ligas das pastas
   paises_disponiveis = ["Todos"] + sorted(
       list(
           set(
@@ -204,7 +223,6 @@ with st.sidebar:
     else:
       st.success("✅ Pedido liberado!")
 
-      # Montagem da mensagem do WhatsApp
       msg = (
           f"Olá, Ramos Sports! Gostaria de fazer um pedido de {total_pecas}"
           " camisas:\n\n"
@@ -231,7 +249,7 @@ with st.sidebar:
 # ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS)
 # -------------------------------------------------------------
 
-# Exibição do Banner no Topo
+# Banner centralizado no topo
 if os.path.exists("banner.jpg"):
   st.image("banner.jpg", use_container_width=True)
 elif os.path.exists("banner.png"):
@@ -240,10 +258,9 @@ elif os.path.exists("banner.png"):
 st.title("⚽ Catálogo Oficial de Camisas")
 st.markdown("Selecione suas camisas favoritas. **Pedido mínimo de 2 peças.**")
 
-# Processamento e Filtragem dos Produtos
+# Filtragem de Produtos
 produtos_filtrados = []
 for p in produtos:
-  # Limpeza do nome do time via Regex (remove sufixos numéricos/romanos)
   nome_limpo = re.sub(
       r"\b(I{1,3}|IV|V|1|2|3|I{1,3}\s*i{1,3})$",
       "",
@@ -264,10 +281,10 @@ for p in produtos:
   p_copia["nome_limpo"] = nome_limpo if nome_limpo else p["time"]
   produtos_filtrados.append(p_copia)
 
-# Ordenação: Clubes mais populares primeiro
-produtos_filtrados.sort(key=prioridade_popularidade)
+# Ordenação com mistura equilibrada entre gigantes do Brasil e da Europa
+produtos_filtrados.sort(key=prioridade_destaque)
 
-# Exibição na Grade de 3 Colunas com Linhas Simétricas
+# Exibição na Grade de 3 Colunas
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
