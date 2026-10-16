@@ -1,0 +1,329 @@
+:root {
+    --bg-main: #0e1117;
+    --bg-card: #161b22;
+    --primary-color: #f39c12;
+    --success-color: #2ecc71;
+    --text-color: #ffffff;
+    --border-color: #30363d;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-color);
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#banner-loja {
+    width: 100%;
+    max-height: 350px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.promo-banner {
+    background-color: #1f2937;
+    border-left: 5px solid var(--primary-color);
+    padding: 12px 18px;
+    border-radius: 8px;
+    color: #f1c40f;
+    font-size: 0.95rem;
+    text-align: left;
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+}
+
+/* CONTROLES DE BUSCA */
+.controls-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.search-box, .filter-box {
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+}
+
+.search-box input, .filter-box select {
+    width: 100%;
+    padding: 12px 15px 12px 40px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+}
+
+/* BOTÃO FLUTUANTE DO CARRINHO */
+.cart-floating-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--success-color);
+    color: #000;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+}
+
+/* GRID DA VITRINE */
+.catalogo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+/* CARD COM MOLDURA ROBUSTA */
+.card-produto {
+    background-color: var(--bg-card);
+    border: 3px solid var(--primary-color);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 8px 16px rgba(243, 156, 18, 0.2);
+}
+
+.card-produto img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-color);
+    text-align: center;
+    margin: 12px 0 8px 0;
+    text-transform: uppercase;
+}
+
+.tag-modelo {
+    background-color: #1f2937;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 5px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.tag-preco {
+    background-color: #0d2818;
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+    padding: 6px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+}
+
+.tag-frete {
+    background-color: #1e3a8a;
+    color: #60a5fa;
+    border: 1px solid #3b82f6;
+    padding: 4px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.btn-comprar {
+    background-color: var(--primary-color);
+    color: #000;
+    font-weight: bold;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.btn-comprar:hover {
+    background-color: #d68910;
+}
+
+/* MODAL DO CARRINHO */
+.cart-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.cart-content {
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    width: 90%;
+    max-width: 450px;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.close-cart {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.cart-items {
+    overflow-y: auto;
+    flex-grow: 1;
+    margin-bottom: 15px;
+}
+
+.cart-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1f2937;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.cart-item-row button {
+    background: none;
+    border: none;
+    color: #ff4d4d;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.cart-footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+}
+
+.cart-alert {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+.whatsapp-btn {
+    background-color: #25D366;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.whatsapp-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.clear-btn {
+    background: none;
+    border: 1px solid #ff4d4d;
+    color: #ff4d4d;
+    padding: 8px;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* RESPONSIVO MOBILE (2 colunas cravadas) */
+@media (max-width: 768px) {
+    .catalogo-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .card-produto {
+        padding: 8px;
+    }
+    .card-produto img {
+        height: 140px !important;
+    }
+    .card-title {
+        font-size: 0.85rem;
+    }
+    body {
+        padding: 10px;
+    }
+}
