@@ -29,46 +29,26 @@ def obter_prioridade_time(camisa):
             return index
     return 999  # Se não for popular, vai para o final da lista
 
-# --- ESTILO E ALINHAMENTO RIGOROSO DOS CARTÕES (CSS) ---
+# --- ESTILO E PADRONIZAÇÃO LIMPA (CSS) ---
 st.markdown("""
     <style>
     .main {
         background-color: #f4f6f9;
     }
-    /* Cartão Flexível com altura fixa perfeita para 3 colunas */
-    .card-produto {
-        background: white;
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        border: 1px solid #e9ecef;
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 500px;
-    }
-    .card-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        flex-grow: 1;
-    }
-    /* Padroniza perfeitamente o container interno da imagem do Streamlit */
+    /* Padroniza perfeitamente o tamanho de todas as imagens do Streamlit */
     div[data-testid="stImage"] {
-        width: 100% !important;
-        height: 210px !important;
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 5px;
+        border: 1px solid #e9ecef;
         display: flex;
-        align-items: center;
         justify-content: center;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        margin-bottom: 10px;
+        align-items: center;
+        height: 220px;
         overflow: hidden;
     }
     div[data-testid="stImage"] img {
-        max-height: 200px !important;
+        max-height: 210px !important;
         object-fit: contain !important;
         width: auto !important;
     }
@@ -80,8 +60,7 @@ st.markdown("""
         font-size: 11px;
         font-weight: bold;
         display: inline-block;
-        margin-bottom: 6px;
-        align-self: flex-start;
+        margin-bottom: 4px;
     }
     .stButton button {
         border-radius: 8px;
@@ -89,7 +68,6 @@ st.markdown("""
         background-color: #0d6efd;
         color: white;
         width: 100%;
-        margin-top: auto;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -188,7 +166,7 @@ else:
         paises_disponiveis = ["Todos"] + sorted(list(set(c.get("pais", "Geral") for c in camisas)))
         pais_selecionado = st.selectbox("Selecione o País / Liga", paises_disponiveis)
 
-    # --- FILTRAGEM CORRIGIDA ---
+    # --- FILTRAGEM ---
     camisas_filtradas = camisas
     if pais_selecionado != "Todos":
         camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
@@ -203,7 +181,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE DE 3 COLUNAS COM ALINHAMENTO PERFEITO ---
+    # --- GRADE DE 3 COLUNAS LIMPA E ALINHADA ---
     colunas_por_linha = 3
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -212,9 +190,6 @@ else:
         
         for idx, camisa in enumerate(grupo_camisas):
             with cols[idx]:
-                st.markdown('<div class="card-produto">', unsafe_allow_html=True)
-                st.markdown('<div class="card-content">', unsafe_allow_html=True)
-                
                 e_popular = obter_prioridade_time(camisa) < 999
                 if e_popular:
                     st.markdown('<span class="badge-destaque">🔥 MAIS VENDIDO</span>', unsafe_allow_html=True)
@@ -235,12 +210,9 @@ else:
                     
                 st.markdown(f"💰 **{camisa['preco']}**")
                 
-                st.markdown('</div>', unsafe_allow_html=True) # Fecha card-content
-                
-                # Botão fixo alinhado na base
                 if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}"):
                     st.session_state.carrinho.append(camisa)
                     st.success(f"{camisa['time']} adicionado!")
                     st.rerun()
-
-                st.markdown('</div>', unsafe_allow_html=True) # Fecha card-produto
+                
+                st.markdown("---")
