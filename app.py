@@ -1,224 +1,242 @@
-import streamlit as st
 import json
 import os
-import urllib.parse
 import re
+import streamlit as st
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# Configuração da Página
 st.set_page_config(
-    page_title="Ramos Sports - Catálogo Oficial", 
-    page_icon="⚽", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Ramos Sports - Catálogo Oficial", page_icon="⚽", layout="wide"
 )
 
-# --- LISTA DE CLUBES POPULARES (PRIORIDADE NO TOPO) ---
-CLUBES_POPULARES = [
-    # Brasileiros
-    "Flamengo", "Corinthians", "Palmeiras", "São Paulo", "Santos", 
-    "Vasco", "Grêmio", "Internacional", "Atlético Mineiro", "Cruzeiro", "Botafogo", "Fluminense",
-    # Europeus
-    "Real Madrid", "Barcelona", "Paris Saint-Germain", "PSG", "Manchester City", 
-    "Manchester United", "Liverpool", "Bayern de Munique", "Bayern", "Juventus", "Arsenal", "Chelsea"
-]
-
-def obter_prioridade_time(camisa):
-    """Retorna a prioridade do time para ordenação (menor valor = aparece primeiro)"""
-    time_nome = camisa.get("time", "").strip()
-    for index, clube_pop in enumerate(CLUBES_POPULARES):
-        if clube_pop.lower() in time_nome.lower():
-            return index
-    return 999
-
-def limpar_nome_clube(nome):
-    """Remove sufixos numéricos ou romanos indesejados (ex: 'Palmeiras lii' -> 'Palmeiras')"""
-    nome_limpo = re.sub(r'\b(i{1,3}|iv|v|vi{0,3}|\d+)\b$', '', nome, flags=re.IGNORECASE).strip()
-    return nome_limpo if nome_limpo else nome
-
-# --- ESTILO E PADRONIZAÇÃO (CSS) ---
-st.markdown("""
+# -------------------------------------------------------------
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Tema Preto e Amarelo / Visual Limpo)
+# -------------------------------------------------------------
+st.markdown(
+    """
     <style>
     .main {
-        background-color: #f4f6f9;
+        background-color: #0e1117;
+        color: #ffffff;
     }
-    div[data-testid="stImage"] {
-        background-color: #ffffff;
-        border-radius: 10px;
-        padding: 5px;
-        border: 1px solid #e9ecef;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 220px;
-        overflow: hidden;
-    }
-    div[data-testid="stImage"] img {
-        max-height: 210px !important;
-        object-fit: contain !important;
-        width: auto !important;
-    }
-    .badge-destaque {
-        background-color: #ff4b4b;
-        color: white;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-size: 11px;
+    .stButton>button {
+        background-color: #f39c12;
+        color: #000000;
         font-weight: bold;
-        display: inline-block;
-        margin-bottom: 4px;
-    }
-    .stButton button {
         border-radius: 8px;
-        font-weight: 600;
-        background-color: #0d6efd;
-        color: white;
+        border: none;
         width: 100%;
+        padding: 0.5rem;
+    }
+    .stButton>button:hover {
+        background-color: #d68910;
+        color: #ffffff;
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #f1c40f;
+        margin-top: 0.5rem;
+        margin-bottom: 0.2rem;
+        text-align: center;
+    }
+    .card-price {
+        font-size: 1rem;
+        color: #2ecc71;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 0.8rem;
     }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# --- INICIALIZAÇÃO DO CARRINHO ---
-if 'carrinho' not in st.session_state:
+# -------------------------------------------------------------
+# CARREGAMENTO DOS DADOS E ATIVOS
+# -------------------------------------------------------------
+
+
+@st.cache_data
+def carregar_dados():
+  if os.path.exists("camisas.json"):
+    with open("camisas.json", "r", encoding="utf-8") as f:
+      return json.load(f)
+  return []
+
+
+produtos = carregar_dados()
+
+# Barra Lateral (Logo e Carrinho)
+with st.sidebar:
+  if os.path.exists("logo.png"):
+    st.image("logo.png", use_container_width=True)
+
+  st.title("🛒 Carrinho de Compras")
+
+  # Inicializa o carrinho na sessão
+  if "carrinho" not in st.session_state:
     st.session_state.carrinho = []
 
-# --- CARREGAMENTO DE DADOS COM CACHE ---
-@st.cache_data(ttl=600)
-def carregar_dados():
-    if os.path.exists("camisas.json"):
-        with open("camisas.json", "r", encoding="utf-8") as f:
-            dados = json.load(f)
-            for c in dados:
-                if "pais" not in c or not c["pais"]:
-                    caminho = c.get("nome_arquivo", "")
-                    partes = caminho.replace("\\", "/").split("/")
-                    if len(partes) > 1:
-                        c["pais"] = partes[0].capitalize()
-                    else:
-                        c["pais"] = "Geral"
-            return dados
-    return []
+  # Exibe os itens no carrinho
+  if len(st.session_state.carrinho) == 0:
+    st.info(
+        "Seu carrinho está vazio. Escolha ao menos 2 peças para fechar o"
+        " pedido!"
+    )
+  else:
+    for idx, item in enumerate(st.session_state.carrinho):
+      col_item1, col_item2 = st.columns([4, 1])
+      with col_item1:
+        st.write(f"• {item['time']} (Ver. {item['versao']})")
+      with col_item2:
+        if st.button("❌", key=f"del_{idx}"):
+          st.session_state.carrinho.pop(idx)
+          st.rerun()
 
-camisas = carregar_dados()
+    total_pecas = len(st.session_state.carrinho)
+    preco_unitario = 150.00
+    valor_total = total_pecas * preco_unitario
 
-if not camisas:
-    st.warning("⚠️ O arquivo 'camisas.json' não foi encontrado ou está vazio. Adicione o arquivo de dados.")
-else:
-    # --- BARRA LATERAL ---
-    with st.sidebar:
-        logo_path = "logo.png"
-        if os.path.exists(logo_path):
-            st.image(logo_path, use_container_width=True)
-        else:
-            st.markdown("## ⚽ RAMOS SPORTS")
-        
-        st.markdown("---")
-        
-        # Carrinho em segundo plano (Oculto num Expander limpo)
-        carrinho = st.session_state.carrinho
-        qtd_itens = len(carrinho)
-        
-        with st.expander(f"🛒 Ver Meu Carrinho ({qtd_itens} itens)", expanded=False):
-            if qtd_itens > 0:
-                for idx, item in enumerate(carrinho):
-                    col_i1, col_i2 = st.columns([5, 1])
-                    nome_exibir = limpar_nome_clube(item['time'])
-                    versao_str = f" ({item['versao']})" if item.get('versao') else ""
-                    col_i1.markdown(f"• {nome_exibir}{versao_str}")
-                    if col_i2.button("❌", key=f"del_{idx}", help="Remover item"):
-                        carrinho.pop(idx)
-                        st.rerun()
-
-                st.markdown("---")
-                
-                if qtd_itens < 2:
-                    st.warning("⚠️ Adicione pelo menos **2 peças** para liberar o envio do pedido.")
-                else:
-                    st.success("✅ Pedido mínimo atingido!")
-                    if qtd_itens >= 3:
-                        st.markdown("🎉 **Desconto especial aplicado!**")
-
-                    texto_pedido = "Olá! Gostaria de encomendar as seguintes camisas na Ramos Sports:\n\n"
-                    for item in carrinho:
-                        nome_exibir = limpar_nome_clube(item['time'])
-                        versao_str = f" - Versão {item['versao']}" if item.get('versao') else ""
-                        texto_pedido += f"• {nome_exibir}{versao_str} ({item['preco']})\n"
-                    
-                    if qtd_itens >= 3:
-                        texto_pedido += "\n*(Aplicar desconto especial de 3 ou mais peças)*"
-                    
-                    texto_codificado = urllib.parse.quote(texto_pedido)
-                    link_wpp_final = f"https://wa.me/5511999999999?text={texto_codificado}"
-
-                    st.markdown(
-                        f'<a href="{link_wpp_final}" target="_blank" style="text-decoration:none;">'
-                        '<button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">'
-                        '💬 Enviar Pedido no WhatsApp'
-                        '</button></a>',
-                        unsafe_allow_html=True
-                    )
-                
-                if st.button("🗑️ Limpar Carrinho", use_container_width=True):
-                    st.session_state.carrinho = []
-                    st.rerun()
-            else:
-                st.markdown("_Seu carrinho está vazio._")
-
-        st.markdown("---")
-        st.header("🔍 Buscar no Catálogo")
-
-        busca_clube = st.text_input("🔎 Pesquisar Clube", placeholder="Ex: Flamengo, Real Madrid...")
-        paises_disponiveis = ["Todos"] + sorted(list(set(c.get("pais", "Geral") for c in camisas)))
-        pais_selecionado = st.selectbox("Selecione o País / Liga", paises_disponiveis)
-
-    # --- FILTRAGEM ---
-    camisas_filtradas = camisas
-    if pais_selecionado != "Todos":
-        camisas_filtradas = [c for c in camisas_filtradas if c.get("pais", "Geral") == pais_selecionado]
-    if busca_clube.strip():
-        camisas_filtradas = [c for c in camisas_filtradas if busca_clube.lower() in c["time"].lower()]
-
-    camisas_ordenadas = sorted(camisas_filtradas, key=obter_prioridade_time)
-
-    # --- CORPO PRINCIPAL DO SITE ---
-    st.title("⚽ Ramos Sports - Catálogo Oficial")
-    st.markdown("### 📢 **Pedidos com 3 ou mais peças você ganha um desconto especial** *(Mínimo de 2 peças por pedido)*")
-    st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
+    st.markdown(f"**Total de peças:** {total_pecas}")
+    st.markdown(f"**Valor total:** R$ {valor_total:,.2f}".replace(".", ","))
 
-    # --- GRADE DE 3 COLUNAS ---
-    colunas_por_linha = 3
-    
-    for i in range(0, len(camisas_ordenadas), colunas_por_linha):
-        grupo_camisas = camisas_ordenadas[i:i + colunas_por_linha]
-        cols = st.columns(colunas_por_linha)
-        
-        for idx, camisa in enumerate(grupo_camisas):
-            with cols[idx]:
-                e_popular = obter_prioridade_time(camisa) < 999
-                if e_popular:
-                    st.markdown('<span class="badge-destaque">🔥 MAIS VENDIDO</span>', unsafe_allow_html=True)
+    if total_pecas < 2:
+      st.warning(
+          "⚠️ Pedido mínimo de **2 peças** para finalizar a compra no"
+          " WhatsApp."
+      )
+    else:
+      st.success("✅ Pedido apto para envio!")
+      # Monta mensagem do WhatsApp
+      mensagem = (
+          f"Olá! Gostaria de fazer o pedido de {total_pecas} camisas na Ramos"
+          " Sports:\n"
+      )
+      for item in st.session_state.carrinho:
+        mensagem += f"- {item['time']} (Versão {item['versao']})\n"
+      mensagem += f"Total: R$ {valor_total:,.2f}"
 
-                caminho_img = camisa.get("nome_arquivo")
-                if caminho_img and os.path.exists(caminho_img):
-                    st.image(caminho_img)
-                else:
-                    st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
+      import urllib.parse
 
-                # Nome limpo do clube (sem sufixos numéricos/romanos)
-                nome_limpo = limpar_nome_clube(camisa['time'])
-                st.markdown(f"**{nome_limpo}**")
-                
-                if camisa.get("pais"):
-                    st.caption(f"📍 {camisa['pais']}")
-                
-                if camisa.get("versao"):
-                    st.markdown(f"Versão: *{camisa['versao']}*")
-                    
-                st.markdown(f"💰 **{camisa['preco']}**")
-                
-                if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}"):
-                    st.session_state.carrinho.append(camisa)
-                    st.success(f"{nome_limpo} adicionado ao carrinho!")
-                    st.rerun()
-                
-                st.markdown("---")
+      whatsapp_url = (
+          f"https://wa.me/5511999999999?text={urllib.parse.quote(mensagem)}"
+      )
+      st.markdown(
+          f'<p style="text-align: center;"><a href="{whatsapp_url}"'
+          ' target="_blank"><button style="background-color: #25D366; color:'
+          ' white; border: none; padding: 10px 20px; border-radius: 8px; font-weight:'
+          ' bold; width: 100%;">Finalizar Pedido no'
+          " WhatsApp</button></a></p>",
+          unsafe_allow_html=True,
+      )
+
+    if st.button("Limpar Carrinho"):
+      st.session_state.carrinho = []
+      st.rerun()
+
+# -------------------------------------------------------------
+# CONTEÚDO PRINCIPAL (BANNER E CATÁLOGO)
+# -------------------------------------------------------------
+
+# Exibe o Banner no Topo
+if os.path.exists("banner.jpg"):
+  st.image("banner.jpg", use_container_width=True)
+elif os.path.exists("banner.png"):
+  st.image("banner.png", use_container_width=True)
+
+st.title("⚽ Ramos Sports - Catálogo Oficial")
+st.markdown(
+    "Explore nossa coleção exclusiva de camisas de futebol. **Regra da loja:"
+    " Mínimo de 2 peças por pedido!**"
+)
+
+# Filtros de Pesquisa e País
+col_f1, col_f2 = st.columns(2)
+
+with col_f1:
+  pesquisa = st.text_input(
+      "🔍 Buscar clube:", placeholder="Digite o nome do time..."
+  )
+
+# Extrai os países/ligas das pastas dos arquivos
+paises_disponíveis = ["Todos"] + sorted(
+    list(
+        set(
+            p["nome_arquivo"].split("/")[0]
+            for p in produtos
+            if "/" in p["nome_arquivo"]
+        )
+    )
+)
+
+with col_f2:
+  pais_selecionado = st.selectbox("🌍 Filtrar por País/Liga:", paises_disponíveis)
+
+# Filtragem dos produtos
+produtos_filtrados = []
+for p in produtos:
+  # Limpeza do nome do clube usando Regex para remover números/sufixos indesejados
+  nome_limpo = re.sub(
+      r"\b(I{1,3}|IV|V|1|2|3|I{1,3}\s*i{1,3})$",
+      "",
+      p["time"],
+      flags=re.IGNORECASE,
+  ).strip()
+
+  # Filtro por texto
+  if pesquisa and pesquisa.lower() not in nome_limpo.lower():
+    continue
+
+  # Filtro por país
+  if (
+      pais_selecionado != "Todos"
+      and not p["nome_arquivo"].startswith(f"{pais_selecionado}/")
+  ):
+    continue
+
+  p_copia = p.copy()
+  p_copia["nome_limpo"] = nome_limpo if nome_limpo else p["time"]
+  produtos_filtrados.append(p_copia)
+
+# Exibição em Grade de 3 Colunas
+if not produtos_filtrados:
+  st.warning("Nenhuma camisa encontrada com os filtros informados.")
+else:
+  cols_por_linha = 3
+  grid_colunas = st.columns(cols_por_linha)
+
+  for i, camisa in enumerate(produtos_filtrados):
+    col_atual = grid_colunas[i % cols_por_linha]
+
+    with col_atual:
+      with st.container():
+        # Exibe imagem da camisa se existir no repositório
+        if os.path.exists(camisa["nome_arquivo"]):
+          st.image(camisa["nome_arquivo"], use_container_width=True)
+        else:
+          st.info(f"Imagem não encontrada: {camisa['nome_arquivo']}")
+
+        st.markdown(
+            f"<div class='card-title'>{camisa['nome_limpo']} — Versão"
+            f" {camisa['versao']}</div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"<div class='card-price'>{camisa['preco']}</div>",
+            unsafe_allow_html=True,
+        )
+
+        if st.button("Adicionar ao Carrinho", key=f"add_{camisa['id']}"):
+          st.session_state.carrinho.append({
+              "id": camisa["id"],
+              "time": camisa["nome_limpo"],
+              "versao": camisa["versao"],
+              "preco": camisa["preco"],
+          })
+          st.success(
+              f"Adicionado: {camisa['nome_limpo']} (Ver. {camisa['versao']})"
+          )
+          st.rerun()
+
+        st.markdown("---")
