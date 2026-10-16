@@ -5,6 +5,11 @@ import urllib.parse
 import streamlit as st
 
 # -------------------------------------------------------------
+# CONFIGURAÇÃO DO SEU WHATSAPP
+# -------------------------------------------------------------
+SEU_NUMERO_WHATSAPP = "5544997339870"
+
+# -------------------------------------------------------------
 # CONFIGURAÇÃO DA PÁGINA
 # -------------------------------------------------------------
 st.set_page_config(
@@ -206,10 +211,8 @@ def prioridade_destaque(camisa):
   return (1, 0, nome)
 
 
-# Função robusta para traduzir o modelo independentemente do formato no JSON
 def traduzir_modelo(versao_original):
   v_str = str(versao_original).strip().upper()
-  # Remove termos extras como "MODELO:", "VERSAO:", espaços e pontuações para isolar o identificador
   v_limpo = re.sub(r"[^A-Z0-9]", "", v_str)
 
   if v_limpo in ["I", "1", "MODELO1", "VERSAO1"]:
@@ -297,7 +300,9 @@ with st.sidebar:
       if total_pecas >= 3:
         msg += "\n*(Cliente apto ao desconto especial de 3+ peças)*"
 
-      url_wa = f"https://wa.me/5511999999999?text={urllib.parse.quote(msg)}"
+      url_wa = (
+          f"https://wa.me/{SEU_NUMERO_WHATSAPP}?text={urllib.parse.quote(msg)}"
+      )
 
       st.markdown(
           f'<a href="{url_wa}" target="_blank">'
