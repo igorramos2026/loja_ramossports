@@ -10,17 +10,17 @@ import streamlit as st
 SEU_NUMERO_WHATSAPP = "5544997339870"
 
 # -------------------------------------------------------------
-# CONFIGURAÇÃO DA PÁGINA
+# CONFIGURAÇÃO DA PÁGINA (Sidebar colapsada por padrão para mobile ver o catálogo primeiro)
 # -------------------------------------------------------------
 st.set_page_config(
     page_title="Ramos Sports - Catálogo Oficial",
     page_icon="⚽",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Molduras, Tags e Destaques)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Responsivo Mobile + Desktop)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -50,30 +50,30 @@ st.markdown(
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #161b22 !important;
         border: 3px solid #f39c12 !important;
-        border-radius: 16px !important;
-        padding: 18px !important;
-        margin-bottom: 25px !important;
-        box-shadow: 0 8px 16px rgba(243, 156, 18, 0.25) !important;
+        border-radius: 14px !important;
+        padding: 12px !important;
+        margin-bottom: 15px !important;
+        box-shadow: 0 6px 12px rgba(243, 156, 18, 0.2) !important;
     }
 
-    /* Imagem padronizada dentro do card */
+    /* Imagem padronizada e otimizada para mobile e desktop */
     div[data-testid="stVerticalBlockBorderWrapper"] img {
-        border-radius: 10px;
+        border-radius: 8px;
         object-fit: cover;
-        height: 280px !important;
+        height: 220px !important;
         width: 100% !important;
         border: 1px solid #30363d;
     }
 
     /* Nome do Clube (Limpo) */
     .card-title {
-        font-size: 1.15rem;
+        font-size: 1rem;
         font-weight: 800;
         color: #ffffff;
         text-align: center;
-        margin-top: 12px;
-        margin-bottom: 8px;
-        min-height: 40px;
+        margin-top: 8px;
+        margin-bottom: 6px;
+        min-height: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -81,17 +81,17 @@ st.markdown(
         letter-spacing: 0.5px;
     }
 
-    /* Tag de Modelo (Casa, Visitante, Terceiro, etc.) */
+    /* Tag de Modelo */
     .tag-modelo {
         background-color: #1f2937;
         color: #f39c12;
         border: 1px solid #f39c12;
-        padding: 6px 12px;
+        padding: 4px 8px;
         border-radius: 6px;
         font-weight: 700;
         text-align: center;
-        font-size: 0.9rem;
-        margin-bottom: 8px;
+        font-size: 0.8rem;
+        margin-bottom: 6px;
     }
 
     /* Tag de Preço */
@@ -99,11 +99,11 @@ st.markdown(
         background-color: #0d2818;
         color: #2ecc71;
         border: 1px solid #2ecc71;
-        padding: 6px 12px;
+        padding: 4px 8px;
         border-radius: 6px;
         font-weight: 800;
         text-align: center;
-        font-size: 1.1rem;
+        font-size: 1rem;
         margin-bottom: 6px;
     }
 
@@ -112,12 +112,12 @@ st.markdown(
         background-color: #1e3a8a;
         color: #60a5fa;
         border: 1px solid #3b82f6;
-        padding: 4px 8px;
+        padding: 3px 6px;
         border-radius: 6px;
         font-weight: 700;
         text-align: center;
-        font-size: 0.8rem;
-        margin-bottom: 12px;
+        font-size: 0.75rem;
+        margin-bottom: 10px;
         text-transform: uppercase;
     }
 
@@ -125,11 +125,12 @@ st.markdown(
     .promo-banner {
         background-color: #1f2937;
         border-left: 5px solid #f39c12;
-        padding: 14px 18px;
+        padding: 12px 16px;
         border-radius: 8px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         color: #f1c40f;
         font-weight: 600;
+        font-size: 0.95rem;
     }
 
     /* Botão Amarelo */
@@ -140,13 +141,21 @@ st.markdown(
         border-radius: 8px;
         border: none;
         width: 100%;
-        padding: 10px 16px;
+        padding: 8px 12px;
         transition: all 0.3s ease;
+        font-size: 0.9rem;
     }
 
     .stButton > button:hover {
         background-color: #e67e22;
         color: #ffffff !important;
+    }
+
+    /* Otimização responsiva para telas menores (Celulares) */
+    @media (max-width: 768px) {
+        div[data-testid="stVerticalBlockBorderWrapper"] img {
+            height: 180px !important;
+        }
     }
     </style>
 """,
@@ -375,6 +384,7 @@ else:
   grid_colunas = st.columns(cols_por_linha)
 
   for i, camisa in enumerate(produtos_filtrados):
+    # Distribui os itens cíclicamente entre as 3 colunas
     col_atual = grid_colunas[i % cols_por_linha]
 
     with col_atual:
@@ -390,7 +400,7 @@ else:
             unsafe_allow_html=True,
         )
 
-        # 2. Tag de Modelo formatado (Casa, Visitante, Terceiro Uniforme, etc.)
+        # 2. Tag de Modelo formatado
         st.markdown(
             f"<div class='tag-modelo'>Modelo: {camisa['modelo_formatado']}</div>",
             unsafe_allow_html=True,
