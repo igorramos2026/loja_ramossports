@@ -5,33 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramos Sports - Catálogo Oficial</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Ícones e Fontes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- CABEÇALHO / BANNER -->
+    <!-- CABEÇALHO / BANNER 100% LARGURA -->
     <header class="header-container">
-        <img id="banner-loja" src="banner.jpg" alt="Banner Ramos Sports" onerror="this.style.display='none'">
-        <h1>⚽ Ramos Sports - Catálogo Oficial</h1>
-        <div class="promo-banner">
-            📌 <b>Regras da Loja:</b> Pedido mínimo de <b>2 peças</b>.<br>
-            📦 <b>Frete Grátis</b> para todo o Brasil em qualquer pedido!<br>
-            🎁 <b>Oferta Especial:</b> Na compra de <b>3 ou mais peças</b>, ganhe um <b>desconto especial</b>!
+        <img id="banner-loja" src="banner.jpg" alt="Banner Ramos Sports" onerror="this.onerror=null; this.src='banner.png';">
+        <div class="header-content">
+            <h1>⚽ Ramos Sports - Catálogo Oficial</h1>
+            <div class="promo-banner">
+                📌 <b>Regras da Loja:</b> Pedido mínimo de <b>2 peças</b>.<br>
+                📦 <b>Frete Grátis</b> para todo o Brasil em qualquer pedido!<br>
+                🎁 <b>Oferta Especial:</b> Na compra de <b>3 ou more peças</b>, ganhe um <b>desconto especial</b>!
+            </div>
         </div>
     </header>
 
-    <!-- BARRA DE CONTROLE (BUSCA E FILTRO) -->
-    <div class="controls-container">
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="input-busca" placeholder="Buscar por clube (ex: Real Madrid, Flamengo)..." oninput="filtrarProdutos()">
+    <div class="main-container">
+        <!-- CONTROLES (BUSCA E FILTRO) -->
+        <div class="controls-container">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="input-busca" placeholder="Buscar por clube (ex: Real Madrid, Flamengo)..." oninput="filtrarProdutos()">
+            </div>
+            <div class="filter-box">
+                <select id="select-pais" onchange="filtrarProdutos()">
+                    <option value="Todos">🌍 Todos os Países/Ligas</option>
+                </select>
+            </div>
         </div>
-        <div class="filter-box">
-            <select id="select-pais" onchange="filtrarProdutos()">
-                <option value="Todos">🌍 Todos os Países/Ligas</option>
-            </select>
-        </div>
+
+        <!-- VITRINE DE PRODUTOS -->
+        <main class="catalogo-grid" id="catalogo-grid">
+            <!-- Produtos inseridos via JS -->
+        </main>
     </div>
 
     <!-- BOTÃO FLUTUANTE DO CARRINHO -->
@@ -39,21 +47,14 @@
         <i class="fa-solid fa-cart-shopping"></i> Carrinho (<span id="cart-count">0</span>) - R$ <span id="cart-total">0,00</span>
     </div>
 
-    <!-- VITRINE DE PRODUTOS (GRID) -->
-    <main class="catalogo-grid" id="catalogo-grid">
-        <!-- Os produtos entram aqui via JavaScript -->
-    </main>
-
-    <!-- MODAL / PAINEL DO CARRINHO -->
+    <!-- MODAL DO CARRINHO -->
     <div class="cart-modal" id="cart-modal">
         <div class="cart-content">
             <div class="cart-header">
                 <h3>🛒 Seu Carrinho</h3>
                 <button class="close-cart" onclick="toggleCarrinho()">&times;</button>
             </div>
-            <div class="cart-items" id="cart-items-container">
-                <!-- Itens adicionados -->
-            </div>
+            <div class="cart-items" id="cart-items-container"></div>
             <div class="cart-footer">
                 <div id="cart-summary-text">Total de peças: 0</div>
                 <div id="cart-alert" class="cart-alert">Adicione pelo menos 2 peças.</div>
@@ -63,6 +64,13 @@
                 <button class="clear-btn" onclick="limparCarrinho()">Limpar Carrinho</button>
             </div>
         </div>
+    </div>
+
+    <!-- MODAL DE EXPANDIR IMAGEM (ZOOM) -->
+    <div class="image-modal" id="image-modal" onclick="fecharImagem()">
+        <span class="close-image">&times;</span>
+        <img class="image-modal-content" id="img-ampliada">
+        <div id="caption-imagem"></div>
     </div>
 
     <script src="script.js"></script>
