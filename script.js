@@ -5,11 +5,27 @@ let carrinho = [];
 const CLUBES_EUROPA = ["real madrid", "barcelona", "paris saint germain", "psg", "manchester city", "bayern", "liverpool", "arsenal", "juventus", "milan"];
 const CLUBES_BRASIL = ["flamengo", "palmeiras", "corinthians", "sao paulo", "santos", "gremio", "internacional", "atletico mineiro", "botafogo", "fluminense", "vasco"];
 
-// Carrega o JSON ao abrir a página de forma robusta
+// Obtém o caminho base do repositório para evitar erros de rota no GitHub Pages
+function getBasePath() {
+    const path = window.location.pathname;
+    if (path.includes('/') && path.split('/')[1]) {
+        const repoName = path.split('/')[1];
+        if (repoName && repoName !== 'index.html') {
+            return `/${repoName}/`;
+        }
+    }
+    return './';
+}
+
+// Carrega o JSON de forma garantida no GitHub Pages
 window.addEventListener("DOMContentLoaded", () => {
-    fetch("./camisas.json")
+    const jsonPath = getBasePath() + "camisas.json";
+    
+    fetch(jsonPath)
         .then(response => {
-            if (!response.ok) throw new Error("Erro ao carregar o JSON");
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: Não foi possível carregar ${jsonPath}`);
+            }
             return response.json();
         })
         .then(data => {
@@ -17,16 +33,27 @@ window.addEventListener("DOMContentLoaded", () => {
             popularFiltroPaises(data);
             filtrarProdutos();
         })
-        .catch(error => console.error("Erro ao carregar camisas.json:", error));
+        .catch(error => {
+            console.error(error);
+            const grid = document.getElementById("catalogo-grid");
+            if (grid) {
+                grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ff4d4d; padding: 20px;">
+                    ⚠️ Erro ao carregar os dados (${error.message}). Verifique se o arquivo <b>camisas.json</b> está na raiz do repositório.
+                </p>`;
+            }
+        });
 });
 
 function popularFiltroPaises(produtos) {
     const select = document.getElementById("select-pais");
+    if (!select) return;
+    
     const paisesSet = new Set();
     
     produtos.forEach(p => {
-        if (p.nome_arquivo) {
-            let caminhoLimpo = p.nome_arquivo.trim();
+        let arq = p.nome_arquivo || p.imagem || p.foto || "";
+        if (arq) {
+            let caminhoLimpo = arq.trim();
             if (caminhoLimpo.startsWith('/')) caminhoLimpo = caminhoLimpo.substring(1);
             if (caminhoLimpo.includes("/")) {
                 const pais = caminhoLimpo.split("/")[0];
@@ -34,6 +61,8 @@ function popularFiltroPaises(produtos) {
             }
         }
     });
+
+    select.innerHTML = '<option value="Todos">🌍 Todos os Países/Ligas</option>';
 
     Array.from(paisesSet).sort().forEach(pais => {
         const option = document.createElement("option");
@@ -76,12 +105,17 @@ function prioridadeDestaque(nomeLimpo) {
 }
 
 function filtrarProdutos() {
-    const termoBusca = (document.getElementById("input-busca").value || "").toLowerCase();
-    const paisSelecionado = document.getElementById("select-pais").value;
+    const inputBusca = document.getElementById("input-busca");
+    const selectPais = document.getElementById("select-pais");
+    
+    const termoBusca = inputBusca ? inputBusca.value.toLowerCase() : "";
+    const paisSelecionado = selectPais ? selectPais.value : "Todos";
 
     let filtrados = produtosGlobais.map(p => {
-        let nomeLimpo = limparNomeClube(p.time || p.nome || "");
-        if (!nomeLimpo) nomeLimpo = p.time || "Camisa";
+        let nomeOriginal = p.time || p.nome || p.clube || "";
+        let nomeLimpo = limparNomeClube(nomeOriginal);
+        if (!nomeLimpo) nomeLimpo = nomeOriginal || "Camisa";
+        
         return {
             ...p,
             nome_limpo: nomeLimpo,
@@ -89,7 +123,7 @@ function filtrarProdutos() {
         };
     }).filter(p => {
         const matchBusca = p.nome_limpo.toLowerCase().includes(termoBusca);
-        let caminhoArquivo = (p.nome_arquivo || "").trim();
+        let caminhoArquivo = (p.nome_arquivo || p.imagem || p.foto || "").trim();
         if (caminhoArquivo.startsWith('/')) caminhoArquivo = caminhoArquivo.substring(1);
         
         const matchPais = (paisSelecionado === "Todos" || caminhoArquivo.startsWith(paisSelecionado + "/"));
@@ -103,6 +137,8 @@ function filtrarProdutos() {
 
 function renderizarCatalogo(produtos) {
     const grid = document.getElementById("catalogo-grid");
+    if (!grid) return;
+    
     grid.innerHTML = "";
 
     if (produtos.length === 0) {
@@ -110,19 +146,23 @@ function renderizarCatalogo(produtos) {
         return;
     }
 
+    const basePath = getBasePath();
+
     produtos.forEach(p => {
         const card = document.createElement("div");
         card.className = "card-produto";
         
-        // Trata o caminho da imagem para o GitHub Pages
-        let imgSrc = p.nome_arquivo ? p.nome_arquivo.trim() : '';
+        let arqOriginal = p.nome_arquivo || p.imagem || p.foto || "";
+        let imgSrc = arqOriginal.trim();
         if (imgSrc.startsWith('/')) {
             imgSrc = imgSrc.substring(1);
         }
-        imgSrc = encodeURI(imgSrc);
+        
+        // Monta a URL completa do caminho do arquivo no repositório
+        const fullImgUrl = basePath + encodeURI(imgSrc);
 
         card.innerHTML = `
-            <img src="${imgSrc}" alt="${p.nome_limpo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/250?text=Sem+Imagem';">
+            <img src="${fullImgUrl}" alt="${p.nome_limpo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/250?text=Sem+Imagem';">
             <div class="card-title">${p.nome_limpo}</div>
             <div class="tag-modelo">Modelo: ${p.modelo_formatado}</div>
             <div class="tag-preco">R$ 140,00</div>
@@ -150,41 +190,50 @@ function limparCarrinho() {
 
 function toggleCarrinho() {
     const modal = document.getElementById("cart-modal");
-    modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
+    if (modal) {
+        modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
+    }
 }
 
 function atualizarCarrinhoUI() {
     const totalPecas = carrinho.length;
     const valorTotal = totalPecas * 140.00;
 
-    document.getElementById("cart-count").textContent = totalPecas;
-    document.getElementById("cart-total").textContent = valorTotal.toFixed(2).replace(".", ",");
-    document.getElementById("cart-summary-text").textContent = `Total de peças: ${totalPecas} (Subtotal: R$ ${valorTotal.toFixed(2).replace(".", ",")})`;
+    const cartCount = document.getElementById("cart-count");
+    const cartTotal = document.getElementById("cart-total");
+    const cartSummary = document.getElementById("cart-summary-text");
+
+    if (cartCount) cartCount.textContent = totalPecas;
+    if (cartTotal) cartTotal.textContent = valorTotal.toFixed(2).replace(".", ",");
+    if (cartSummary) cartSummary.textContent = `Total de peças: ${totalPecas} (Subtotal: R$ ${valorTotal.toFixed(2).replace(".", ",")})`;
 
     const container = document.getElementById("cart-items-container");
-    container.innerHTML = "";
-
-    carrinho.forEach((item, index) => {
-        const row = document.createElement("div");
-        row.className = "cart-item-row";
-        row.innerHTML = `
-            <span>• ${item.time} (${item.modelo})</span>
-            <button onclick="removerCarrinho(${index})"><i class="fa-solid fa-trash"></i></button>
-        `;
-        container.appendChild(row);
-    });
+    if (container) {
+        container.innerHTML = "";
+        carrinho.forEach((item, index) => {
+            const row = document.createElement("div");
+            row.className = "cart-item-row";
+            row.innerHTML = `
+                <span>• ${item.time} (${item.modelo})</span>
+                <button onclick="removerCarrinho(${index})"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(row);
+        });
+    }
 
     const alertBox = document.getElementById("cart-alert");
     const whatsBtn = document.getElementById("whatsapp-btn");
 
-    if (totalPecas < 2) {
-        alertBox.style.display = "block";
-        alertBox.textContent = "⚠️ Adicione pelo menos 2 peças para liberar o WhatsApp.";
-        whatsBtn.disabled = true;
-    } else {
-        alertBox.style.display = "block";
-        alertBox.textContent = totalPecas >= 3 ? "🔥 Desconto especial aplicado!" : "✅ Pedido liberado com Frete Grátis!";
-        whatsBtn.disabled = false;
+    if (alertBox && whatsBtn) {
+        if (totalPecas < 2) {
+            alertBox.style.display = "block";
+            alertBox.textContent = "⚠️ Adicione pelo menos 2 peças para liberar o WhatsApp.";
+            whatsBtn.disabled = true;
+        } else {
+            alertBox.style.display = "block";
+            alertBox.textContent = totalPecas >= 3 ? "🔥 Desconto especial aplicado!" : "✅ Pedido liberado com Frete Grátis!";
+            whatsBtn.disabled = false;
+        }
     }
 }
 
