@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Molduras Fortes e Tags Separadas)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Molduras, Tags e Destaques)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -41,7 +41,7 @@ st.markdown(
         border: 1px solid #30363d !important;
     }
 
-    /* MOLDURA DO CARD MUITO MAIS EVIDENTE E ROBUSTA */
+    /* MOLDURA DO CARD ROBUSTA E EVIDENTE */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #161b22 !important;
         border: 3px solid #f39c12 !important;
@@ -60,7 +60,7 @@ st.markdown(
         border: 1px solid #30363d;
     }
 
-    /* Nome do Clube (Apenas o nome, limpo) */
+    /* Nome do Clube (Limpo) */
     .card-title {
         font-size: 1.15rem;
         font-weight: 800;
@@ -76,8 +76,8 @@ st.markdown(
         letter-spacing: 0.5px;
     }
 
-    /* Tag de Versão */
-    .tag-versao {
+    /* Tag de Modelo (Casa, Visitante, Terceiro, etc.) */
+    .tag-modelo {
         background-color: #1f2937;
         color: #f39c12;
         border: 1px solid #f39c12;
@@ -99,7 +99,21 @@ st.markdown(
         font-weight: 800;
         text-align: center;
         font-size: 1.1rem;
+        margin-bottom: 6px;
+    }
+
+    /* Tag de Frete Grátis */
+    .tag-frete {
+        background-color: #1e3a8a;
+        color: #60a5fa;
+        border: 1px solid #3b82f6;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        text-align: center;
+        font-size: 0.8rem;
         margin-bottom: 12px;
+        text-transform: uppercase;
     }
 
     /* Banner promocional de desconto no topo */
@@ -192,6 +206,20 @@ def prioridade_destaque(camisa):
   return (1, 0, nome)
 
 
+# Função para traduzir o modelo conforme a regra solicitada
+def traduzir_modelo(versao_original):
+  v_limpa = str(versao_original).strip()
+  v_upper = v_limpa.upper()
+  if v_upper == "I":
+    return "Casa"
+  elif v_upper == "II":
+    return "Visitante"
+  elif v_upper == "III":
+    return "Terceiro Uniforme"
+  else:
+    return v_limpa
+
+
 # -------------------------------------------------------------
 # BARRA LATERAL (LOGO, FILTROS E CARRINHO)
 # -------------------------------------------------------------
@@ -230,21 +258,27 @@ with st.sidebar:
     for idx, item in enumerate(st.session_state.carrinho):
       c1, c2 = st.columns([4, 1])
       with c1:
-        st.write(f"• {item['time']} ({item['versao']})")
+        st.write(f"• {item['time']} ({item['modelo']})")
       with c2:
         if st.button("❌", key=f"del_{idx}"):
           st.session_state.carrinho.pop(idx)
           st.rerun()
 
     total_pecas = len(st.session_state.carrinho)
-    valor_total = total_pecas * 150.00
+    valor_unitario = 140.00
+    valor_total = total_pecas * valor_unitario
 
     st.markdown("---")
     st.markdown(f"**Total de peças:** {total_pecas}")
     st.markdown(f"**Subtotal:** R$ {valor_total:,.2f}".replace(".", ","))
 
     if total_pecas >= 3:
-      st.info("🔥 **Desconto especial aplicado no fechamento via WhatsApp!**")
+      st.info(
+          "🔥 **Desconto especial aplicado no fechamento via WhatsApp!** (Frete"
+          " Grátis)"
+      )
+    else:
+      st.info("📦 **Frete Grátis garantido!**")
 
     if total_pecas < 2:
       st.warning("⚠️ Adicione **pelo menos 2 peças** para liberar o WhatsApp.")
@@ -253,10 +287,10 @@ with st.sidebar:
 
       msg = (
           f"Olá, Ramos Sports! Gostaria de fazer um pedido de {total_pecas}"
-          " camisas:\n\n"
+          " camisas (Frete Grátis):\n\n"
       )
       for item in st.session_state.carrinho:
-        msg += f"• {item['time']} (Versão {item['versao']})\n"
+        msg += f"• {item['time']} ({item['modelo']})\n"
       msg += f"\nTotal: R$ {valor_total:,.2f}"
       if total_pecas >= 3:
         msg += "\n*(Cliente apto ao desconto especial de 3+ peças)*"
@@ -287,11 +321,12 @@ elif os.path.exists("banner.png"):
 
 st.title("⚽ Catálogo Oficial de Camisas")
 
-# Aviso em destaque sobre o pedido mínimo e o desconto
+# Aviso em destaque sobre o pedido mínimo, frete grátis e o desconto
 st.markdown(
     """
     <div class="promo-banner">
         📌 <b>Regras da Loja:</b> Pedido mínimo de <b>2 peças</b>.<br>
+        📦 <b>Frete Grátis</b> para todo o Brasil em qualquer pedido!<br>
         🎁 <b>Oferta Especial:</b> Na compra de <b>3 ou mais peças</b>, você ganha um <b>desconto especial</b> no fechamento do seu pedido!
     </div>
 """,
@@ -319,11 +354,13 @@ for p in produtos:
 
   p_copia = p.copy()
   p_copia["nome_limpo"] = nome_limpo if nome_limpo else p["time"]
+  p_copia["modelo_formatado"] = traduzir_modelo(p.get("versao", ""))
+  p_copia["preco_fixo"] = "R$ 140,00"
   produtos_filtrados.append(p_copia)
 
 produtos_filtrados.sort(key=prioridade_destaque)
 
-# Exibição dos cards com moldura robusta e tags separadas
+# Exibição dos cards
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
@@ -340,31 +377,37 @@ else:
         else:
           st.info("Imagem indisponível")
 
-        # 1. Nome limpo do clube em destaque
+        # 1. Nome limpo do clube
         st.markdown(
             f"<div class='card-title'>{camisa['nome_limpo']}</div>",
             unsafe_allow_html=True,
         )
 
-        # 2. Tag separada para a Versão
+        # 2. Tag de Modelo formatado (Casa, Visitante, Terceiro Uniforme, etc.)
         st.markdown(
-            f"<div class='tag-versao'>Versão: {camisa['versao']}</div>",
+            f"<div class='tag-modelo'>Modelo: {camisa['modelo_formatado']}</div>",
             unsafe_allow_html=True,
         )
 
-        # 3. Tag separada para o Preço
+        # 3. Tag de Preço Fixo (R$ 140,00)
         st.markdown(
-            f"<div class='tag-preco'>{camisa['preco']}</div>",
+            f"<div class='tag-preco'>{camisa['preco_fixo']}</div>",
             unsafe_allow_html=True,
         )
 
-        # 4. Botão de Adicionar ao Carrinho claramente vinculado ao card
+        # 4. Tag de Frete Grátis
+        st.markdown(
+            "<div class='tag-frete'>🚚 Frete Grátis</div>",
+            unsafe_allow_html=True,
+        )
+
+        # 5. Botão de Adicionar ao Carrinho
         if st.button("Adicionar ao Carrinho", key=f"btn_{camisa['id']}"):
           st.session_state.carrinho.append({
               "id": camisa["id"],
               "time": camisa["nome_limpo"],
-              "versao": camisa["versao"],
-              "preco": camisa["preco"],
+              "modelo": camisa["modelo_formatado"],
+              "preco": 140.00,
           })
           st.success("Adicionado!")
           st.rerun()
