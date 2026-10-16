@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 import urllib.parse
+import re
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -27,15 +28,20 @@ def obter_prioridade_time(camisa):
     for index, clube_pop in enumerate(CLUBES_POPULARES):
         if clube_pop.lower() in time_nome.lower():
             return index
-    return 999  # Se não for popular, vai para o final da lista
+    return 999
 
-# --- ESTILO E PADRONIZAÇÃO LIMPA (CSS) ---
+def limpar_nome_clube(nome):
+    """Remove sufixos numéricos ou romanos indesejados (ex: 'Palmeiras lii' -> 'Palmeiras')"""
+    # Remove algarismos romanos ou números no final do nome (ex: i, ii, iii, iv, 1, 2, 3)
+    nome_limpo = re.sub(r'\b(i{1,3}|iv|v|vi{0,3}|\d+)\b$', '', nome, flags=urllib.parse.re.IGNORECASE if 'urllib' in globals() else 0).strip()
+    return nome_limpo if nome_limpo else nome
+
+# --- ESTILO E PADRONIZAÇÃO (CSS) ---
 st.markdown("""
     <style>
     .main {
         background-color: #f4f6f9;
     }
-    /* Padroniza perfeitamente o tamanho de todas as imagens do Streamlit */
     div[data-testid="stImage"] {
         background-color: #ffffff;
         border-radius: 10px;
@@ -98,7 +104,7 @@ camisas = carregar_dados()
 if not camisas:
     st.warning("⚠️ O arquivo 'camisas.json' não foi encontrado ou está vazio. Adicione o arquivo de dados.")
 else:
-    # --- BARRA LATERAL (LOGO, CARRINHO E FILTROS) ---
+    # --- BARRA LATERAL ---
     with st.sidebar:
         logo_path = "logo.png"
         if os.path.exists(logo_path):
@@ -109,7 +115,6 @@ else:
         st.markdown("---")
         st.markdown("### 🛒 Carrinho de Compras")
         
-        # Frase Promocional
         st.info("ℹ️ **Regras:**\n- Pedido mínimo: **2 peças**\n- **Pedidos com 3 ou mais peças você ganha um desconto especial!**")
 
         carrinho = st.session_state.carrinho
@@ -119,8 +124,9 @@ else:
             
             for idx, item in enumerate(carrinho):
                 col_i1, col_i2 = st.columns([5, 1])
+                nome_exibir = limpar_nome_clube(item['time'])
                 versao_str = f" ({item['versao']})" if item.get('versao') else ""
-                col_i1.markdown(f"• {item['time']}{versao_str}")
+                col_i1.markdown(f"• {nome_exibir}{versao_str}")
                 if col_i2.button("❌", key=f"del_{idx}", help="Remover item"):
                     carrinho.pop(idx)
                     st.rerun()
@@ -136,8 +142,9 @@ else:
 
                 texto_pedido = "Olá! Gostaria de encomendar as seguintes camisas na Ramos Sports:\n\n"
                 for item in carrinho:
+                    nome_exibir = limpar_nome_clube(item['time'])
                     versao_str = f" - Versão {item['versao']}" if item.get('versao') else ""
-                    texto_pedido += f"• {item['time']}{versao_str} ({item['preco']})\n"
+                    texto_pedido += f"• {nome_exibir}{versao_str} ({item['preco']})\n"
                 
                 if len(carrinho) >= 3:
                     texto_pedido += "\n*(Aplicar desconto especial de 3 ou mais peças)*"
@@ -181,7 +188,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE DE 3 COLUNAS LIMPA E ALINHADA ---
+    # --- GRADE DE 3 COLUNAS COM EXPANDER DE FOTO ---
     colunas_por_linha = 3
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -197,10 +204,15 @@ else:
                 caminho_img = camisa.get("nome_arquivo")
                 if caminho_img and os.path.exists(caminho_img):
                     st.image(caminho_img)
+                    # Expander opcional para ampliar a foto
+                    with st.expander("🔍 Ver foto ampliada"):
+                        st.image(caminho_img, use_container_width=True)
                 else:
                     st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
 
-                st.markdown(f"**{camisa['time']}**")
+                # Nome limpo do clube (sem sufixos numéricos/romanos)
+                nome_limpo = limpar_nome_clube(camisa['time'])
+                st.markdown(f"**{nome_limpo}**")
                 
                 if camisa.get("pais"):
                     st.caption(f"📍 {camisa['pais']}")
@@ -212,7 +224,7 @@ else:
                 
                 if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}"):
                     st.session_state.carrinho.append(camisa)
-                    st.success(f"{camisa['time']} adicionado!")
+                    st.success(f"{nome_limpo} adicionado!")
                     st.rerun()
                 
                 st.markdown("---")
