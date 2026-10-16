@@ -29,7 +29,7 @@ def obter_prioridade_time(camisa):
             return index
     return 999  # Se não for popular, vai para o final da lista
 
-# --- ESTILO E ALINHAMENTO SIMÉTRICO DOS CARTÕES (CSS) ---
+# --- ESTILO E PADRONIZAÇÃO DE IMAGENS (CSS) ---
 st.markdown("""
     <style>
     .main {
@@ -45,10 +45,13 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 440px; /* Altura fixa para todos os cartões ficarem simétricos */
     }
-    .card-content {
-        flex-grow: 1;
+    /* Padroniza o tamanho de todas as fotos para ficarem iguais e simétricas */
+    .card-produto img {
+        width: 100% !important;
+        height: 250px !important;
+        object-fit: cover !important; /* Corta perfeitamente as pontas sem distorcer a proporção */
+        border-radius: 8px;
     }
     .badge-destaque {
         background-color: #ff4b4b;
@@ -66,6 +69,7 @@ st.markdown("""
         background-color: #0d6efd;
         color: white;
         width: 100%;
+        margin-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -179,7 +183,7 @@ else:
     st.markdown(f"**Exibindo {len(camisas_ordenadas)} camisas encontradas**")
     st.markdown("---")
 
-    # --- GRADE PADRÃO DE 4 COLUNAS COM ALINHAMENTO SIMÉTRICO ---
+    # --- GRADE PADRÃO DE 4 COLUNAS COM IMAGENS PADRONIZADAS ---
     colunas_por_linha = 4
     
     for i in range(0, len(camisas_ordenadas), colunas_por_linha):
@@ -189,7 +193,6 @@ else:
         for idx, camisa in enumerate(grupo_camisas):
             with cols[idx]:
                 st.markdown('<div class="card-produto">', unsafe_allow_html=True)
-                st.markdown('<div class="card-content">', unsafe_allow_html=True)
                 
                 e_popular = obter_prioridade_time(camisa) < 999
                 if e_popular:
@@ -197,9 +200,9 @@ else:
 
                 caminho_img = camisa.get("nome_arquivo")
                 if caminho_img and os.path.exists(caminho_img):
-                    st.image(caminho_img, use_container_width=True)
+                    st.image(caminho_img)
                 else:
-                    st.image("https://via.placeholder.com/300?text=Foto+Indisponível", use_container_width=True)
+                    st.image("https://via.placeholder.com/300?text=Foto+Indisponível")
 
                 st.markdown(f"**{camisa['time']}**")
                 
@@ -211,12 +214,9 @@ else:
                     
                 st.markdown(f"💰 **{camisa['preco']}**")
                 
-                st.markdown('</div>', unsafe_allow_html=True)  # Fim do conteúdo interno
-                
-                # Botão fixo na base do cartão
-                if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}", use_container_width=True):
+                if st.button("➕ Adicionar", key=f"btn_{i}_{idx}_{camisa['time']}_{camisa.get('versao', '')}"):
                     st.session_state.carrinho.append(camisa)
                     st.success(f"{camisa['time']} adicionado!")
                     st.rerun()
 
-                st.markdown('</div>', unsafe_allow_html=True)  # Fim do card-produto
+                st.markdown('</div>', unsafe_allow_html=True)
