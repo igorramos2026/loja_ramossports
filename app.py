@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# ESTILIZAÇÃO CSS CUSTOMIZADA (Molduras Fortes e Marcadas)
+# ESTILIZAÇÃO CSS CUSTOMIZADA (Molduras Fortes e Tags Separadas)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -41,53 +41,74 @@ st.markdown(
         border: 1px solid #30363d !important;
     }
 
-    /* MOLDURA DO CARD DESTACADA: Borda branca mais grossa e marcante */
+    /* MOLDURA DO CARD MUITO MAIS EVIDENTE E ROBUSTA */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #161b22 !important;
-        border: 2px solid #ffffff !important;
-        border-radius: 14px !important;
-        padding: 16px !important;
-        margin-bottom: 20px !important;
-        box-shadow: 0 6px 12px rgba(255, 255, 255, 0.15) !important;
+        border: 3px solid #f39c12 !important;
+        border-radius: 16px !important;
+        padding: 18px !important;
+        margin-bottom: 25px !important;
+        box-shadow: 0 8px 16px rgba(243, 156, 18, 0.25) !important;
     }
 
     /* Imagem padronizada dentro do card */
     div[data-testid="stVerticalBlockBorderWrapper"] img {
-        border-radius: 8px;
+        border-radius: 10px;
         object-fit: cover;
         height: 280px !important;
         width: 100% !important;
+        border: 1px solid #30363d;
     }
 
-    /* Detalhes do Card */
+    /* Nome do Clube (Apenas o nome, limpo) */
     .card-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #f39c12;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #ffffff;
         text-align: center;
-        margin-top: 10px;
-        margin-bottom: 4px;
-        min-height: 48px;
+        margin-top: 12px;
+        margin-bottom: 8px;
+        min-height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .card-price {
-        font-size: 1.15rem;
-        color: #2ecc71;
-        font-weight: bold;
+    /* Tag de Versão */
+    .tag-versao {
+        background-color: #1f2937;
+        color: #f39c12;
+        border: 1px solid #f39c12;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 700;
         text-align: center;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    /* Tag de Preço */
+    .tag-preco {
+        background-color: #0d2818;
+        color: #2ecc71;
+        border: 1px solid #2ecc71;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 800;
+        text-align: center;
+        font-size: 1.1rem;
         margin-bottom: 12px;
     }
 
     /* Banner promocional de desconto no topo */
     .promo-banner {
         background-color: #1f2937;
-        border-left: 4px solid #f39c12;
-        padding: 12px 16px;
-        border-radius: 6px;
-        margin-bottom: 20px;
+        border-left: 5px solid #f39c12;
+        padding: 14px 18px;
+        border-radius: 8px;
+        margin-bottom: 25px;
         color: #f1c40f;
         font-weight: 600;
     }
@@ -255,7 +276,7 @@ with st.sidebar:
       st.rerun()
 
 # -------------------------------------------------------------
-# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS COM MOLDURA FORTE)
+# ÁREA PRINCIPAL (BANNER + GRADE 3 COLUNAS)
 # -------------------------------------------------------------
 
 # Banner no topo
@@ -302,7 +323,7 @@ for p in produtos:
 
 produtos_filtrados.sort(key=prioridade_destaque)
 
-# Exibição dos cards com moldura espessa e bem delimitada
+# Exibição dos cards com moldura robusta e tags separadas
 if not produtos_filtrados:
   st.warning("Nenhuma camisa encontrada com os filtros selecionados.")
 else:
@@ -319,16 +340,25 @@ else:
         else:
           st.info("Imagem indisponível")
 
+        # 1. Nome limpo do clube em destaque
         st.markdown(
-            f"<div class='card-title'>{camisa['nome_limpo']} —"
-            f" {camisa['versao']}</div>",
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f"<div class='card-price'>{camisa['preco']}</div>",
+            f"<div class='card-title'>{camisa['nome_limpo']}</div>",
             unsafe_allow_html=True,
         )
 
+        # 2. Tag separada para a Versão
+        st.markdown(
+            f"<div class='tag-versao'>Versão: {camisa['versao']}</div>",
+            unsafe_allow_html=True,
+        )
+
+        # 3. Tag separada para o Preço
+        st.markdown(
+            f"<div class='tag-preco'>{camisa['preco']}</div>",
+            unsafe_allow_html=True,
+        )
+
+        # 4. Botão de Adicionar ao Carrinho claramente vinculado ao card
         if st.button("Adicionar ao Carrinho", key=f"btn_{camisa['id']}"):
           st.session_state.carrinho.append({
               "id": camisa["id"],
