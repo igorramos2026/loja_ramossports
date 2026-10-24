@@ -83,8 +83,16 @@ h1 {
 
 .search-box, .filter-box {
     flex: 1;
-    min-width: 250px;
+    min-width: 200px;
     position: relative;
+}
+
+/* MELHORIA: contador de resultados acima da vitrine */
+.contador-resultados {
+    text-align: center;
+    color: #9aa4b2;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
 }
 
 .search-box i {
@@ -210,6 +218,22 @@ h1 {
     cursor: pointer;
     width: 100%;
     font-size: 0.82rem;
+    transition: background-color 0.2s ease;
+}
+
+/* MELHORIA: feedback visual temporário ao adicionar ao carrinho */
+.btn-comprar:disabled {
+    background-color: var(--success-color);
+    color: #04210f;
+    cursor: default;
+}
+
+/* Usada tanto para "Nenhuma camisa encontrada" quanto para "Carregando catálogo..." */
+.sem-resultados {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #888;
+    padding: 40px;
 }
 
 /* MODAL DO CARRINHO */
