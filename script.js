@@ -1,9 +1,44 @@
+// =====================================================================
+// RAMOS SPORTS - CATÁLOGO (script.js)
+//
+// Correções aplicadas:
+//  1) Modelo (Casa/Visitante/Terceiro) agora é identificado a partir do
+//     nome do arquivo da imagem, não só do campo "versao" — evita exibir
+//     modelo errado em fotos duplicadas (ex: "Toulouse_III_1.jpeg").
+//  2) Cards e itens do carrinho agora são montados via DOM (createElement
+//     + textContent), não mais com innerHTML concatenando strings — isso
+//     elimina o bug de escaping (ex: times com apóstrofo no nome) e
+//     deixa o código mais seguro de um jeito geral.
+//  3) Imagens com loading="lazy" + decoding="async" (catálogo tem 400+
+//     produtos, isso evita carregar tudo de uma vez).
+//  4) Busca com debounce (não refaz o grid inteiro a cada tecla digitada).
+//  5) Carrinho agora é salvo no localStorage (sobrevive a F5 / fechar aba).
+//
+// Melhorias extras:
+//  - Filtro por Modelo (Casa / Visitante / Terceiro Uniforme).
+//  - Contador de resultados acima da vitrine.
+//  - Modais fecham com Esc, e o do carrinho também fecha clicando fora.
+//  - Feedback visual rápido no botão ao adicionar ao carrinho.
+// =====================================================================
+
 const SEU_NUMERO_WHATSAPP = "5544997339870";
+
+// ⚠️ ATENÇÃO: o camisas.json tem "preco": "R$ 150,00" em todos os itens,
+// mas o site sempre mostrou R$ 140,00. Mantive 140 aqui (igual já estava
+// no ar) — confirme qual é o valor certo e ajuste essa constante se precisar.
+const PRECO_UNITARIO = 140.00;
+
+const CHAVE_CARRINHO = "ramos_sports_carrinho";
+
 let produtosGlobais = [];
 let carrinho = [];
 
 const CLUBES_EUROPA = ["real madrid", "barcelona", "paris saint germain", "psg", "manchester city", "bayern", "liverpool", "arsenal", "juventus", "milan"];
 const CLUBES_BRASIL = ["flamengo", "palmeiras", "corinthians", "sao paulo", "santos", "gremio", "internacional", "atletico mineiro", "botafogo", "fluminense", "vasco"];
+
+// ---------------------------------------------------------------------
+// UTILITÁRIOS
+// ---------------------------------------------------------------------
 
 function getBasePath() {
     const path = window.location.pathname;
@@ -16,54 +51,35 @@ function getBasePath() {
     return './';
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-    const jsonPath = getBasePath() + "camisas.json";
-    
-    fetch(jsonPath)
-        .then(response => {
-            if (!response.ok) throw new Error(`Erro ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            produtosGlobais = data;
-            popularFiltroPaises(data);
-            filtrarProdutos();
-        })
-        .catch(error => {
-            console.error(error);
-            const grid = document.getElementById("catalogo-grid");
-            if (grid) {
-                grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ff4d4d; padding: 20px;">
-                    ⚠️ Não foi possível carregar os produtos. Verifique o arquivo <b>camisas.json</b>.
-                </p>`;
-            }
-        });
-});
+// MELHORIA: debounce genérico, usado na busca por texto.
+function debounce(fn, delay = 250) {
+    let timer = null;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
 
-function popularFiltroPaises(produtos) {
-    const select = document.getElementById("select-pais");
-    if (!select) return;
-    
-    const paisesSet = new Set();
-    produtos.forEach(p => {
-        let arq = p.nome_arquivo || p.imagem || p.foto || "";
-        if (arq) {
-            let caminhoLimpo = arq.trim();
-            if (caminhoLimpo.startsWith('/')) caminhoLimpo = caminhoLimpo.substring(1);
-            if (caminhoLimpo.includes("/")) {
-                const pais = caminhoLimpo.split("/")[0];
-                if (pais) paisesSet.add(pais);
-            }
+// CORREÇÃO (bug de modelo): tenta extrair o modelo (I/II/III/IV/V) direto
+// do nome do arquivo, que é mais confiável que o campo "versao" quando
+// existem fotos duplicadas do mesmo uniforme (ex: "..._III_1.jpeg",
+// "..._III(1).jpeg"). Retorna null se não encontrar nada reconhecível.
+function extrairModeloDoArquivo(nomeArquivo) {
+    if (!nomeArquivo) return null;
+
+    const nomeBase = nomeArquivo.split("/").pop().replace(/\.[^/.]+$/, ""); // remove pasta e extensão
+    const semContadorDuplicata = nomeBase.replace(/\(\d+\)$/, ""); // remove "(1)", "(2)" etc no final
+    const partes = semContadorDuplicata.split("_");
+
+    // percorre de trás pra frente: o último token numérico costuma ser
+    // só um contador de foto duplicada, não o modelo em si.
+    for (let i = partes.length - 1; i >= 0; i--) {
+        const token = partes[i].toUpperCase();
+        if (["I", "II", "III", "IV", "V"].includes(token)) {
+            return token;
         }
-    });
-
-    select.innerHTML = '<option value="Todos">🌍 Todos os Países/Ligas</option>';
-    Array.from(paisesSet).sort().forEach(pais => {
-        const option = document.createElement("option");
-        option.value = pais;
-        option.textContent = pais;
-        select.appendChild(option);
-    });
+    }
+    return null;
 }
 
 function limparNomeClube(nomeOriginal) {
@@ -86,95 +102,277 @@ function prioridadeDestaque(nomeLimpo) {
     const nomeLower = (nomeLimpo || "").toLowerCase();
     let ranking = [];
     let maxLen = Math.max(CLUBES_EUROPA.length, CLUBES_BRASIL.length);
-    for(let i = 0; i < maxLen; i++) {
+    for (let i = 0; i < maxLen; i++) {
         if (i < CLUBES_EUROPA.length) ranking.push(CLUBES_EUROPA[i]);
         if (i < CLUBES_BRASIL.length) ranking.push(CLUBES_BRASIL[i]);
     }
-    for(let i = 0; i < ranking.length; i++) {
+    for (let i = 0; i < ranking.length; i++) {
         if (nomeLower.includes(ranking[i])) return i;
     }
     return 999;
 }
 
+// ---------------------------------------------------------------------
+// INICIALIZAÇÃO
+// ---------------------------------------------------------------------
+
+window.addEventListener("DOMContentLoaded", () => {
+    carregarCarrinhoSalvo(); // MELHORIA: restaura carrinho salvo (localStorage)
+
+    const jsonPath = getBasePath() + "camisas.json";
+
+    fetch(jsonPath)
+        .then(response => {
+            if (!response.ok) throw new Error(`Erro ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            produtosGlobais = data;
+            popularFiltroPaises(data);
+            filtrarProdutos();
+        })
+        .catch(error => {
+            console.error(error);
+            const grid = document.getElementById("catalogo-grid");
+            if (grid) {
+                grid.innerHTML = `<p class="sem-resultados" style="color:#ff4d4d;">
+                    ⚠️ Não foi possível carregar os produtos. Verifique o arquivo <b>camisas.json</b>.
+                </p>`;
+            }
+        });
+
+    // CORREÇÃO/MELHORIA: busca com debounce + listeners dos filtros
+    const inputBusca = document.getElementById("input-busca");
+    const selectPais = document.getElementById("select-pais");
+    const selectModelo = document.getElementById("select-modelo");
+
+    if (inputBusca) inputBusca.addEventListener("input", debounce(filtrarProdutos, 250));
+    if (selectPais) selectPais.addEventListener("change", filtrarProdutos);
+    if (selectModelo) selectModelo.addEventListener("change", filtrarProdutos);
+
+    // MELHORIA: fechar modais com Esc
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            fecharImagem();
+            const cartModal = document.getElementById("cart-modal");
+            if (cartModal) cartModal.style.display = "none";
+        }
+    });
+
+    // MELHORIA: fechar o carrinho clicando fora do conteúdo (no fundo escuro)
+    const cartModal = document.getElementById("cart-modal");
+    if (cartModal) {
+        cartModal.addEventListener("click", (e) => {
+            if (e.target === cartModal) toggleCarrinho();
+        });
+    }
+});
+
+function popularFiltroPaises(produtos) {
+    const select = document.getElementById("select-pais");
+    if (!select) return;
+
+    const paisesSet = new Set();
+    produtos.forEach(p => {
+        let arq = p.nome_arquivo || p.imagem || p.foto || "";
+        if (arq) {
+            let caminhoLimpo = arq.trim();
+            if (caminhoLimpo.startsWith('/')) caminhoLimpo = caminhoLimpo.substring(1);
+            if (caminhoLimpo.includes("/")) {
+                const pais = caminhoLimpo.split("/")[0];
+                if (pais) paisesSet.add(pais);
+            }
+        }
+    });
+
+    select.innerHTML = '<option value="Todos">🌍 Todos os Países/Ligas</option>';
+    Array.from(paisesSet).sort().forEach(pais => {
+        const option = document.createElement("option");
+        option.value = pais;
+        option.textContent = pais;
+        select.appendChild(option);
+    });
+}
+
+// ---------------------------------------------------------------------
+// FILTRAGEM E RENDERIZAÇÃO
+// ---------------------------------------------------------------------
+
 function filtrarProdutos() {
     const inputBusca = document.getElementById("input-busca");
     const selectPais = document.getElementById("select-pais");
+    const selectModelo = document.getElementById("select-modelo");
+
     const termoBusca = inputBusca ? inputBusca.value.toLowerCase() : "";
     const paisSelecionado = selectPais ? selectPais.value : "Todos";
+    const modeloSelecionado = selectModelo ? selectModelo.value : "Todos";
 
     let filtrados = produtosGlobais.map(p => {
         let nomeOriginal = p.time || p.nome || p.clube || "";
         let nomeLimpo = limparNomeClube(nomeOriginal);
         if (!nomeLimpo) nomeLimpo = nomeOriginal || "Camisa";
-        
+
+        const caminhoImagem = p.nome_arquivo || p.imagem || p.foto || "";
+
+        // CORREÇÃO: prioriza o modelo identificado pelo nome do arquivo;
+        // só cai pro campo "versao" se não conseguir identificar pela imagem.
+        const modeloDoArquivo = extrairModeloDoArquivo(caminhoImagem);
+        const modeloBase = modeloDoArquivo || (p.versao || p.modelo || "");
+
         return {
             ...p,
             nome_limpo: nomeLimpo,
-            modelo_formatado: traduzirModelo(p.versao || p.modelo || "")
+            modelo_formatado: traduzirModelo(modeloBase),
         };
     }).filter(p => {
         const matchBusca = p.nome_limpo.toLowerCase().includes(termoBusca);
+
         let caminhoArquivo = (p.nome_arquivo || p.imagem || p.foto || "").trim();
         if (caminhoArquivo.startsWith('/')) caminhoArquivo = caminhoArquivo.substring(1);
         const matchPais = (paisSelecionado === "Todos" || caminhoArquivo.startsWith(paisSelecionado + "/"));
-        return matchBusca && matchPais;
+
+        const matchModelo = (modeloSelecionado === "Todos" || p.modelo_formatado === modeloSelecionado);
+
+        return matchBusca && matchPais && matchModelo;
     });
 
     filtrados.sort((a, b) => prioridadeDestaque(a.nome_limpo) - prioridadeDestaque(b.nome_limpo));
     renderizarCatalogo(filtrados);
 }
 
+function atualizarContadorResultados(qtd) {
+    const el = document.getElementById("contador-resultados");
+    if (!el) return;
+    el.textContent = qtd === 1 ? "1 camisa encontrada" : `${qtd} camisas encontradas`;
+}
+
+// CORREÇÃO (bug de escaping): cards agora são montados com createElement +
+// textContent + addEventListener, em vez de innerHTML com strings
+// concatenadas. Isso elimina o risco de quebrar o HTML (e os cliques)
+// quando um nome de time tem aspas, apóstrofo etc.
 function renderizarCatalogo(produtos) {
     const grid = document.getElementById("catalogo-grid");
     if (!grid) return;
     grid.innerHTML = "";
 
+    atualizarContadorResultados(produtos.length);
+
     if (produtos.length === 0) {
-        grid.innerHTML = "<p style='grid-column: 1 / -1; text-align: center; color: #888; padding: 40px;'>Nenhuma camisa encontrada.</p>";
+        const vazio = document.createElement("p");
+        vazio.className = "sem-resultados";
+        vazio.textContent = "Nenhuma camisa encontrada.";
+        grid.appendChild(vazio);
         return;
     }
 
     const basePath = getBasePath();
+    const fragment = document.createDocumentFragment();
 
     produtos.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "card-produto";
-        
         let arqOriginal = p.nome_arquivo || p.imagem || p.foto || "";
         let imgSrc = arqOriginal.trim();
         if (imgSrc.startsWith('/')) imgSrc = imgSrc.substring(1);
         const fullImgUrl = basePath + encodeURI(imgSrc);
+        const tituloImagem = `${p.nome_limpo} - ${p.modelo_formatado}`;
 
-        card.innerHTML = `
-            <img src="${fullImgUrl}" alt="${p.nome_limpo}" onclick="expandirImagem('${fullImgUrl}', '${p.nome_limpo} - ${p.modelo_formatado}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/250?text=Sem+Imagem';">
-            <div class="card-title">${p.nome_limpo}</div>
-            <div class="tag-modelo">Modelo: ${p.modelo_formatado}</div>
-            <div class="tag-preco">R$ 140,00</div>
-            <div class="tag-frete">🚚 Frete Grátis</div>
-            <button class="btn-comprar" onclick="adicionarCarrinho('${p.id || p.time}', '${p.nome_limpo.replace(/'/g, "\\'")}', '${p.modelo_formatado.replace(/'/g, "\\'")}')">Adicionar ao Carrinho</button>
-        `;
-        grid.appendChild(card);
+        const card = document.createElement("div");
+        card.className = "card-produto";
+
+        const img = document.createElement("img");
+        img.src = fullImgUrl;
+        img.alt = p.nome_limpo;
+        img.loading = "lazy";      // MELHORIA: lazy loading (performance)
+        img.decoding = "async";
+        img.addEventListener("click", () => expandirImagem(fullImgUrl, tituloImagem));
+        img.addEventListener("error", function onImgError() {
+            img.removeEventListener("error", onImgError);
+            img.src = "https://via.placeholder.com/250?text=Sem+Imagem";
+        });
+
+        const titulo = document.createElement("div");
+        titulo.className = "card-title";
+        titulo.textContent = p.nome_limpo;
+
+        const tagModelo = document.createElement("div");
+        tagModelo.className = "tag-modelo";
+        tagModelo.textContent = `Modelo: ${p.modelo_formatado}`;
+
+        const tagPreco = document.createElement("div");
+        tagPreco.className = "tag-preco";
+        tagPreco.textContent = `R$ ${PRECO_UNITARIO.toFixed(2).replace(".", ",")}`;
+
+        const tagFrete = document.createElement("div");
+        tagFrete.className = "tag-frete";
+        tagFrete.textContent = "🚚 Frete Grátis";
+
+        const botao = document.createElement("button");
+        botao.className = "btn-comprar";
+        botao.textContent = "Adicionar ao Carrinho";
+        botao.addEventListener("click", () => {
+            adicionarCarrinho(p.id || p.time, p.nome_limpo, p.modelo_formatado);
+
+            // MELHORIA: feedback visual rápido no clique
+            const textoOriginal = botao.textContent;
+            botao.textContent = "✓ Adicionado!";
+            botao.disabled = true;
+            setTimeout(() => {
+                botao.textContent = textoOriginal;
+                botao.disabled = false;
+            }, 900);
+        });
+
+        card.append(img, titulo, tagModelo, tagPreco, tagFrete, botao);
+        fragment.appendChild(card);
     });
+
+    grid.appendChild(fragment);
 }
 
-// FUNÇÕES DE EXPANDIR IMAGEM (ZOOM)
+// ---------------------------------------------------------------------
+// ZOOM DE IMAGEM
+// ---------------------------------------------------------------------
+
 function expandirImagem(src, titulo) {
     const modal = document.getElementById("image-modal");
     const img = document.getElementById("img-ampliada");
     const caption = document.getElementById("caption-imagem");
-    
+
     modal.style.display = "flex";
     img.src = src;
     caption.textContent = titulo;
 }
 
 function fecharImagem() {
-    document.getElementById("image-modal").style.display = "none";
+    const modal = document.getElementById("image-modal");
+    if (modal) modal.style.display = "none";
 }
 
-// FUNÇÕES DO CARRINHO
+// ---------------------------------------------------------------------
+// CARRINHO
+// ---------------------------------------------------------------------
+
+// MELHORIA: persistência do carrinho em localStorage
+function salvarCarrinho() {
+    try {
+        localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(carrinho));
+    } catch (e) {
+        console.warn("Não foi possível salvar o carrinho:", e);
+    }
+}
+
+function carregarCarrinhoSalvo() {
+    try {
+        const salvo = localStorage.getItem(CHAVE_CARRINHO);
+        carrinho = salvo ? JSON.parse(salvo) : [];
+    } catch (e) {
+        console.warn("Não foi possível carregar o carrinho salvo:", e);
+        carrinho = [];
+    }
+    atualizarCarrinhoUI();
+}
+
 function adicionarCarrinho(id, time, modelo) {
-    carrinho.push({ id, time, modelo, preco: 140.00 });
+    carrinho.push({ id, time, modelo, preco: PRECO_UNITARIO });
     atualizarCarrinhoUI();
 }
 
@@ -197,7 +395,7 @@ function toggleCarrinho() {
 
 function atualizarCarrinhoUI() {
     const totalPecas = carrinho.length;
-    const valorTotal = totalPecas * 140.00;
+    const valorTotal = totalPecas * PRECO_UNITARIO;
 
     const cartCount = document.getElementById("cart-count");
     const cartTotal = document.getElementById("cart-total");
@@ -207,16 +405,23 @@ function atualizarCarrinhoUI() {
     if (cartTotal) cartTotal.textContent = valorTotal.toFixed(2).replace(".", ",");
     if (cartSummary) cartSummary.textContent = `Total de peças: ${totalPecas} (Subtotal: R$ ${valorTotal.toFixed(2).replace(".", ",")})`;
 
+    // CORREÇÃO (bug de escaping): itens do carrinho também via DOM, não innerHTML com string.
     const container = document.getElementById("cart-items-container");
     if (container) {
         container.innerHTML = "";
         carrinho.forEach((item, index) => {
             const row = document.createElement("div");
             row.className = "cart-item-row";
-            row.innerHTML = `
-                <span>• ${item.time} (${item.modelo})</span>
-                <button onclick="removerCarrinho(${index})"><i class="fa-solid fa-trash"></i></button>
-            `;
+
+            const texto = document.createElement("span");
+            texto.textContent = `• ${item.time} (${item.modelo})`;
+
+            const btnRemover = document.createElement("button");
+            btnRemover.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            btnRemover.setAttribute("aria-label", "Remover item");
+            btnRemover.addEventListener("click", () => removerCarrinho(index));
+
+            row.append(texto, btnRemover);
             container.appendChild(row);
         });
     }
@@ -235,11 +440,13 @@ function atualizarCarrinhoUI() {
             whatsBtn.disabled = false;
         }
     }
+
+    salvarCarrinho(); // MELHORIA: toda mudança no carrinho já salva automaticamente
 }
 
 function enviarWhatsApp() {
     const totalPecas = carrinho.length;
-    const valorTotal = totalPecas * 140.00;
+    const valorTotal = totalPecas * PRECO_UNITARIO;
 
     let msg = `Olá, Ramos Sports! Gostaria de fazer um pedido de ${totalPecas} camisas (Frete Grátis):\n\n`;
     carrinho.forEach(item => {
